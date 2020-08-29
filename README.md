@@ -30,7 +30,7 @@ Repository Contents
   **/src/asm/FullDemo/** 
   * FullDemo.asm - The original graphics demo redone using the TTY functions using PutString instead of DrawString.  
 * **/src/org/**  
-  * LibTest - Original graphics assembly functions written by Richard Dienstknecht  
+  * LibTest - Original 1861 graphics code library functions written by Richard Dienstknecht  
 * **/pics** -- example pictures for readme
 
 Notes
@@ -92,6 +92,11 @@ that they will be available in all countries in which their respective owner ope
 Any company, product, or services names may be trademarks or services marks of others.
 
 All libraries used in this code are copyright their respective authors.
+
+This code is based on a graphics code library written by Richard Dienstknecht
+
+1861 Graphics Code 
+Copyright (c) 2020 by Richard Dienstknecht
   
 The 1802 Membership Card Microcomputer 
 Copyright (c) 2006-2020  by Lee A. Hart.
