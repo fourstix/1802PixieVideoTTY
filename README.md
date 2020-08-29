@@ -89,12 +89,12 @@ The following control characters are supported.
   <tr align="center">   
    <th>ASCII Name</th>
    <th>Hex Value</th>
-   <th colspan="3">Description</th>
+   <th colspan="3" >Description</th>
   </tr>
   <tr align="center">   
    <td>Backspace</td>
    <td>0x08</td>
-   <td  colspan="3">Move the cursor back one average character width (8 pixels) and delete the character.</td>
+   <td  colspan="3" >Move the cursor back one average character width (8 pixels) and delete the character.</td>
   </tr>
   <tr align="center">   
   <td>Tab</td>
@@ -126,10 +126,12 @@ The following control characters are supported.
      <td>0x18</td>
      <td  colspan="3">Move cursor back to the begining of the current line and erase all characters in the line.</td>
   </tr>
+  <tr align="center">     
     <td>Unit Separator</td>
        <td>0x1F</td>
        <td  colspan="3">Advance cursor one pixel width. Can be used after backspacing a narrow character to restore spacing.</td>
     </tr>
+  <tr align="center">       
   <td>Delete</td>
      <td>0x7F</td>
      <td  colspan="3">Move cursor back one pixel width and delete the pixel column. Can be used after backspacing over a wide character to rubout remaining pixels.</td>
