@@ -27,7 +27,7 @@ Repository Contents
   * PutString.asm - Write strings to the display in 64x64 resoulution using the PutString function.
 * **/src/asm/StringBuffer/** 
   * StringBuffer.asm - Load up to 31 characters typed into the hex keypad into a buffer until null (00) is typed in, then write the string to the display.
-  **/src/asm/FullDemo/** 
+* **/src/asm/FullDemo/** 
   * FullDemo.asm - The original graphics demo redone using the TTY functions using PutString instead of DrawString.
 * **/examples/**  -- Assembled example files for the 1802PixieVideoTTY functions, including list, hex and binary files.
 * **/examples/BasicTerminal/** 
@@ -39,7 +39,7 @@ Repository Contents
   * PutString - Write strings to the display in 64x64 resoulution using the PutString function.
 * **/examples/StringBuffer/** 
   * StringBuffer - Load up to 31 characters typed into the hex keypad into a buffer until null (00) is typed in, then write the string to the display.
-  **/examples/FullDemo/** 
+* **/examples/FullDemo/** 
   * FullDemo - The original graphics demo redone using the TTY functions using PutString instead of DrawString.  
 * **/src/org/**  
   * LibTest - Original 1861 graphics code library functions written by Richard Dienstknecht  
@@ -150,6 +150,10 @@ The following control characters are supported.
   </tr>
 
 </table>
+
+Examples
+--------
+TBD: Table with pictures of examples goes here.
 
 License Information
 -------------------
