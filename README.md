@@ -10,31 +10,75 @@ graphics code that was posted in the [Cosmac Elf Group on Groups.io.](https://gr
 Repository Contents
 -------------------
 * **/src/asm/**  -- Assembly code source files for the 1802PixieVideoTTY functions.
-  * StdDefs.asm 	- standard definitions used in assembly source files
-  * Initialize.asm 	- initialization functions and includes
-  * Buffers.asm 	- definitions for video buffers and variables used by the program
-  * Graphics1861.asm	- graphics routines for drawing on the CDP1861 display
-  * Text1861.asm	- routines to draw text characters on screen
-  * Fonts.asm		- font table for text
-  * Tty1861.asm		- teletype terminal functions for the CDP1861 display
-  * Padding.asm		- optional padding definitions to prevent page boundary errors in user code.
-  **/src/asm/BasicTerminal/** 
+  * StdDefs.asm - standard definitions used in assembly source files
+  * Initialize.asm - initialization functions and includes
+  * Buffers.asm - definitions for video buffers and variables used by the program
+  * Graphics1861.asm - graphics routines for drawing on the CDP1861 display
+  * Text1861.asm - routines to draw text characters on screen
+  * Fonts.asm - font table for text
+  * Tty1861.asm	- teletype terminal functions for the CDP1861 display
+  * Padding.asm	- optional padding definitions to prevent page boundary errors in user code.
+* **/src/asm/BasicTerminal/** 
   * BasicTerminal.asm - Use TTY functions to echo ASCII characters typed into the hex keypad onto 
-  	the CDP1861 display in 64x64 resolution using GetChar and PutChar functions.
-  **/src/asm/HelloWorld/** 
+  the CDP1861 display in 64x64 resolution using GetChar and PutChar functions.
+* **/src/asm/HelloWorld/** 
   * HelloWorld.asm - Write a greeting in 64x32 resolution to the display when the Input button is pressed using the PutChar function.
   **/src/asm/PutString/** 
   * PutString.asm - Write strings to the display in 64x64 resoulution using the PutString function.
-   **/src/asm/StringBuffer/** 
+* **/src/asm/StringBuffer/** 
   * StringBuffer.asm - Load up to 31 characters typed into the hex keypad into a buffer until null (00) is typed in, then write the string to the display.
   **/src/asm/FullDemo/** 
-  * FullDemo.asm - The original graphics demo redone using the TTY functions using PutString instead of DrawString.
-  *   
+  * FullDemo.asm - The original graphics demo redone using the TTY functions using PutString instead of DrawString.  
 * **/src/org/**  
   * LibTest - Original graphics assembly functions written by Richard Dienstknecht  
 * **/pics** -- example pictures for readme
 
-
+Notes
+-----
+* **Video Resolution** 
+* Resolutions of 64 x 64 and 64 x 32 are supported.
+* The 64 x 128 resolution is not supported.
+* **BeginTerminal** 
+* This function initializes system variables used by other TTY Terminal functions.
+* The BeginTerminal function must be called before any any other Terminal functions.
+* **VideoOn** 
+* Turns pixie video on (input port 1) and sets a flag used by other TTY Terminal functions
+* This function must be used to turn the video on.
+* **VideoOff**
+* Turns pixie video off (output port 1) and clears a flag used by other TTY Terminal functions
+* This function must be used to turn the video off.
+* **WaitForSafeUpdate**
+* Check the CDP1861 video status and wait for DMA to complete before returning.
+* When this function returns it is safe to make updates to the video.
+* There will be time for about 8000 instruction cycles (at 2MHz) before the next DMA occurs. 
+* All Get/Put/Clear terminal functions call this function before making any changes to video data.
+* **ClearScreen**
+* Blank the video display and home the cursor.
+* Safe - This function checks the video status before accessing video data
+* **GetChar**
+* Gets Character from Hex Input
+* Wait for Input press and reads Ascii character from data bus.
+* Safe - This function checks the video status before accessing video data
+* **PutChar**
+* Puts a character on the screen and advance the cursor
+* Safe - This function checks the video status before accessing video data.
+* **PutString**
+* Reads characters from a string and writes to video until a null is read.
+* Safe - This function checks the video status before accessing video data.
+* **WaitForInput**
+* Waits for Input key press and release.  No data is read.
+* Safe - This function does not access video data.
+* **ReadHexInput**
+* Reads a byte from Hex Input.
+* Waits for Input press and reads (input port 4) from the data bus.
+* Safe - This function does not access video data.
+* **WriteHexOutput**
+* Writes a value out to the hex display.
+* Write a byte of data (output port 4) to the data bus.
+* Safe - This function does not access video data.
+* **Other Functions**
+* Please see source code comments before using other functions.
+* Some internal functions are unsafe, unless WaitForSafeUpdate is called immediately before.
 
 License Information
 -------------------
