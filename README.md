@@ -28,7 +28,19 @@ Repository Contents
 * **/src/asm/StringBuffer/** 
   * StringBuffer.asm - Load up to 31 characters typed into the hex keypad into a buffer until null (00) is typed in, then write the string to the display.
   **/src/asm/FullDemo/** 
-  * FullDemo.asm - The original graphics demo redone using the TTY functions using PutString instead of DrawString.  
+  * FullDemo.asm - The original graphics demo redone using the TTY functions using PutString instead of DrawString.
+* **/examples/**  -- Assembled example files for the 1802PixieVideoTTY functions, including list, hex and binary files.
+* **/examples/BasicTerminal/** 
+  * BasicTerminal - Use TTY functions to echo ASCII characters typed into the hex keypad onto 
+  the CDP1861 display in 64x64 resolution using GetChar and PutChar functions.
+* **/examples/HelloWorld/** 
+  * HelloWorld - Write a greeting in 64x32 resolution to the display when the Input button is pressed using the PutChar function.
+  **/examples/PutString/** 
+  * PutString - Write strings to the display in 64x64 resoulution using the PutString function.
+* **/examples/StringBuffer/** 
+  * StringBuffer - Load up to 31 characters typed into the hex keypad into a buffer until null (00) is typed in, then write the string to the display.
+  **/examples/FullDemo/** 
+  * FullDemo - The original graphics demo redone using the TTY functions using PutString instead of DrawString.  
 * **/src/org/**  
   * LibTest - Original 1861 graphics code library functions written by Richard Dienstknecht  
 * **/pics** -- example pictures for readme
