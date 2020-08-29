@@ -33,8 +33,8 @@ Repository Contents
   * LibTest - Original 1861 graphics code library functions written by Richard Dienstknecht  
 * **/pics** -- example pictures for readme
 
-Notes
------
+Usage Notes
+-----------
 * **Video Resolution** 
 * Resolutions of 64 x 64 and 64 x 32 are supported.
 * The 64 x 128 resolution is not supported.
@@ -48,22 +48,22 @@ Notes
 * Turns pixie video off (output port 1) and clears a flag used by other TTY Terminal functions
 * This function must be used to turn the video off.
 * **WaitForSafeUpdate**
-* Check the CDP1861 video status and wait for DMA to complete before returning.
+* Checks the CDP1861 video status and waits for DMA to complete before returning.
 * When this function returns it is safe to make updates to the video.
 * There will be time for about 8000 instruction cycles (at 2MHz) before the next DMA occurs. 
 * All Get/Put/Clear terminal functions call this function before making any changes to video data.
 * **ClearScreen**
-* Blank the video display and home the cursor.
+* Blanks the video display and homes the cursor.
 * Safe - This function checks the video status before accessing video data
 * **GetChar**
 * Gets Character from Hex Input
-* Wait for Input press and reads Ascii character from data bus.
+* Waits for an Input press and reads Ascii character from data bus.
 * Safe - This function checks the video status before accessing video data
 * **PutChar**
-* Puts a character on the screen and advance the cursor
+* Puts a character on the display and advances the cursor
 * Safe - This function checks the video status before accessing video data.
 * **PutString**
-* Reads characters from a string and writes to video until a null is read.
+* Reads characters from a string and writes to display until a null is read.
 * Safe - This function checks the video status before accessing video data.
 * **WaitForInput**
 * Waits for Input key press and release.  No data is read.
@@ -77,8 +77,65 @@ Notes
 * Write a byte of data (output port 4) to the data bus.
 * Safe - This function does not access video data.
 * **Other Functions**
-* Please see source code comments before using other functions.
+* Please see the source code comments before using other functions.
 * Some internal functions are unsafe, unless WaitForSafeUpdate is called immediately before.
+
+Control Characters
+------------------
+The following control characters are supported.
+
+
+<table class="table table-hover table-striped table-bordered">
+  <tr align="center">   
+   <th>ASCII Name</th>
+   <th>Hex Value</th>
+   <th colspan="3">Description</th>
+  </tr>
+  <tr align="center">   
+   <td>Backspace</td>
+   <td>0x08</td>
+   <td  colspan="3">Move the cursor back one average character width (8 pixels) and delete the character.</td>
+  </tr>
+  <tr align="center">   
+  <td>Tab</td>
+     <td>0x09</td>
+     <td  colspan="3">Advance cursor to next tab stop, located every 2 average character widths (16 pixels).</td>
+  </tr>
+  <tr align="center">   
+  <td>New Line</td>
+     <td>0x0A</td>
+     <td  colspan="3">Advance cursor to begining of the next line.</td>
+  </tr>
+  <tr align="center">   
+  <td>Vertical Tab</td>
+     <td>0x0B</td>
+     <td  colspan="3">Advance cursor down to next line without changing the x location.</td>
+  </tr>
+  <tr align="center">   
+  <td>Form Feed</td>
+       <td>0x0C</td>
+       <td  colspan="3">Clear the display and home the cursor.</td>
+    </tr>
+  <tr align="center">     
+  <td>Carriage Return</td>
+     <td>0x0D</td>
+     <td  colspan="3">Advance cursor to begining of the next line.</td>
+  </tr>
+  <tr align="center">     
+  <td>Cancel</td>
+     <td>0x18</td>
+     <td  colspan="3">Move cursor back to the begining of the current line and erase all characters in the line.</td>
+  </tr>
+    <td>Unit Separator</td>
+       <td>0x1F</td>
+       <td  colspan="3">Advance cursor one pixel width. Can be used after backspacing a narrow character to restore spacing.</td>
+    </tr>
+  <td>Delete</td>
+     <td>0x7F</td>
+     <td  colspan="3">Move cursor back one pixel width and delete the pixel column. Can be used after backspacing over a wide character to rubout remaining pixels.</td>
+  </tr>
+
+</table>
 
 License Information
 -------------------
@@ -95,7 +152,7 @@ All libraries used in this code are copyright their respective authors.
 
 This code is based on a graphics code library written by Richard Dienstknecht
 
-1861 Graphics Code 
+1861 Graphics Code Library
 Copyright (c) 2020 by Richard Dienstknecht
   
 The 1802 Membership Card Microcomputer 
