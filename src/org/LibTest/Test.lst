@@ -1,0 +1,1835 @@
+ AS V1.42 Beta [Bld 83] - source file Test.asm - page 1 - 6/3/2020 15:51:22
+
+
+       1/       0 : =Elf                System				EQU "Elf"
+       2/       0 :                     
+       3/       0 : =TRUE               UseIO				EQU "TRUE"
+       4/       0 :                     
+       5/       0 : =TRUE               UseRandom			EQU "TRUE"
+       6/       0 : =8H                 RandomSize			EQU 8				; 8 or 16
+       7/       0 :                     
+       8/       0 : =TRUE               UseGraphics			EQU "TRUE"
+       9/       0 : =64x64              Resolution			EQU "64x64"			; "64x32", "64x64" or "64x128"
+      10/       0 : =OFF                BackBuffer			EQU "OFF"			; 'OFF', 'COPY' or 'SWAP'
+      11/       0 :                     
+      12/       0 : =TRUE               UseText				EQU "TRUE"
+      13/       0 : =TRUE               Use96Char			EQU "TRUE"			; TRUE = 96 char, FALSE = 64 char
+      14/       0 :                     
+      15/       0 : =FALSE              UseConsole			EQU "FALSE"
+      16/       0 :                     
+      17/       0 : =TRUE               UseConversion		EQU "TRUE"
+      18/       0 :                     
+      19/       0 :                     					INCLUDE "StdDefs.asm"
+(1)    1/       0 :                     ; =========================================================================================
+(1)    2/       0 :                     ; Register definitions
+(1)    3/       0 :                     ; =========================================================================================
+(1)    4/       0 :                     
+(1)    5/       0 : =0H                 R0					EQU 00H
+(1)    6/       0 : =1H                 R1					EQU 01H
+(1)    7/       0 : =2H                 R2					EQU 02H
+(1)    8/       0 : =3H                 R3					EQU 03H
+(1)    9/       0 : =4H                 R4					EQU 04H
+(1)   10/       0 : =5H                 R5					EQU 05H
+(1)   11/       0 : =6H                 R6					EQU 06H
+(1)   12/       0 : =7H                 R7					EQU 07H
+(1)   13/       0 : =8H                 R8					EQU 08H
+(1)   14/       0 : =9H                 R9					EQU 09H
+(1)   15/       0 : =AH                 RA					EQU 0AH
+(1)   16/       0 : =BH                 RB					EQU 0BH
+(1)   17/       0 : =CH                 RC					EQU 0CH
+(1)   18/       0 : =DH                 RD					EQU 0DH
+(1)   19/       0 : =EH                 RE					EQU 0EH
+(1)   20/       0 : =FH                 RF					EQU 0FH
+(1)   21/       0 :                     
+(1)   22/       0 :                     ;------------------------------------------------------------------------------------------
+(1)   23/       0 :                     
+      20/       0 :                     					INCLUDE "Initialisation.asm"
+(1)    1/       0 :                     					INCLUDE "bitfuncs.inc"
+(2)    1/       0 :                                     save
+(2)   84/       0 :                                     restore                 ; wieder erlauben
+(2)   85/       0 :                     
+(2)   86/       0 :                     
+(1)    2/       0 :                     
+(1)    3/       0 :                     ; =========================================================================================
+(1)    4/       0 :                     ; Starting point of the program and initialisation of the CPU registers
+(1)    5/       0 :                     ;
+(1)    6/       0 :                     ; R0		Reserved as pointer to the DMA buffer
+(1)    7/       0 :                     ; R1		Reserved as interrupt vector
+(1)    8/       0 :                     ; R2		Main stack pointer
+(1)    9/       0 :                     ; R3		Main program counter
+(1)   10/       0 :                     ; R4		Program counter for standard call procedure
+(1)   11/       0 :                     ; R5		Program counter for standard return procedure
+(1)   12/       0 :                     ; R6		Reserved for temporary values from standard call/return procedures
+(1)   13/       0 :                     ; R7 - RF	Free to use in the program, not initialized
+ AS V1.42 Beta [Bld 83] - source file Test.asm(Initialisation.asm) - page 2 - 6/3/2020 15:51:22
+
+
+(1)   14/       0 :                     ; =========================================================================================	
+(1)   15/       0 :                     					CPU 1802
+(1)   16/       0 :                     					ORG 0000H
+(1)   17/       0 :                     		
+(1)   18/       0 : F8 0A               Init:				LDI  lo(DisplayInt)
+(1)   19/       2 : A1                  					PLO  R1
+(1)   20/       3 : F8 03               					LDI  hi(DisplayInt)
+(1)   21/       5 : B1                  					PHI  R1
+(1)   22/       6 : F8 FF               					LDI  lo(StackTop)
+(1)   23/       8 : A2                  					PLO  R2
+(1)   24/       9 : F8 00               					LDI  hi(StackTop)
+(1)   25/       B : B2                  					PHI  R2
+(1)   26/       C : F8 07               					LDI  lo(Start)
+(1)   27/       E : A3                  					PLO  R3
+(1)   28/       F : F8 06               					LDI  hi(Start)
+(1)   29/      11 : B3                  					PHI  R3
+(1)   30/      12 : F8 20               					LDI  lo(StdCall)
+(1)   31/      14 : A4                  					PLO  R4
+(1)   32/      15 : F8 00               					LDI  hi(StdCall)
+(1)   33/      17 : B4                  					PHI  R4
+(1)   34/      18 : F8 30               					LDI  lo(StdReturn)
+(1)   35/      1A : A5                  					PLO  R5
+(1)   36/      1B : F8 00               					LDI  hi(StdReturn)
+(1)   37/      1D : B5                  					PHI  R5
+(1)   38/      1E : D3                  					SEP  R3
+(1)   39/      1F :                     
+(1)   40/      1F :                     ;------------------------------------------------------------------------------------------
+(1)   41/      1F :                     
+(1)   42/      1F :                     
+(1)   43/      1F :                     ; =========================================================================================
+(1)   44/      1F :                     ; Standard Call Procedure
+(1)   45/      1F :                     ; as described in RCA CDP1802 User Manual, page 61 
+(1)   46/      1F :                     ; =========================================================================================
+(1)   47/      1F : D3                  STC_Exit:			SEP  R3
+(1)   48/      20 : E2                  StdCall:			SEX  R2
+(1)   49/      21 : 96                  					GHI  R6
+(1)   50/      22 : 73                  					STXD
+(1)   51/      23 : 86                  					GLO  R6
+(1)   52/      24 : 73                  					STXD
+(1)   53/      25 : 93                  					GHI  R3
+(1)   54/      26 : B6                  					PHI  R6
+(1)   55/      27 : 83                  					GLO  R3
+(1)   56/      28 : A6                  					PLO  R6
+(1)   57/      29 : 46                  					LDA  R6
+(1)   58/      2A : B3                  					PHI  R3
+(1)   59/      2B : 46                  					LDA  R6
+(1)   60/      2C : A3                  					PLO  R3
+(1)   61/      2D : 30 1F               					BR   STC_Exit
+(1)   62/      2F :                     
+(1)   63/      2F :                     ;------------------------------------------------------------------------------------------
+(1)   64/      2F :                     
+(1)   65/      2F :                     
+(1)   66/      2F :                     ; =========================================================================================
+(1)   67/      2F :                     ; Standard Return Procedure
+(1)   68/      2F :                     ; as described in RCA CDP1802 User Manual, page 61 
+(1)   69/      2F :                     ; =========================================================================================
+(1)   70/      2F : D3                  STR_Exit:			SEP  R3
+(1)   71/      30 : 96                  StdReturn			GHI  R6
+(1)   72/      31 : B3                  					PHI  R3
+(1)   73/      32 : 86                  					GLO  R6
+ AS V1.42 Beta [Bld 83] - source file Test.asm(Initialisation.asm) - page 3 - 6/3/2020 15:51:22
+
+
+(1)   74/      33 : A3                  					PLO  R3
+(1)   75/      34 : E2                  					SEX  R2
+(1)   76/      35 : 12                  					INC  R2
+(1)   77/      36 : 72                  					LDXA
+(1)   78/      37 : A6                  					PLO  R6
+(1)   79/      38 : F0                  					LDX
+(1)   80/      39 : B6                  					PHI  R6
+(1)   81/      3A : 30 2F               					BR   STR_Exit
+(1)   82/      3C :                     
+(1)   83/      3C :                     ;------------------------------------------------------------------------------------------
+(1)   84/      3C :                     
+(1)   85/      3C :                     
+(1)   86/      3C :                     ; =========================================================================================
+(1)   87/      3C :                     ; Simple delay loop
+(1)   88/      3C :                     ; 
+(1)   89/      3C :                     ; Parameters:
+(1)   90/      3C :                     ; RF.0				Delay time
+(1)   91/      3C :                     ; =========================================================================================
+(1)   92/      3C : C4                  Delay:				NOP
+(1)   93/      3D : 2F                  					DEC  RF
+(1)   94/      3E : 8F                  					GLO  RF
+(1)   95/      3F : 3A 3C               					BNZ  Delay
+(1)   96/      41 : D5                  					SEP  R5
+(1)   97/      42 :                     
+(1)   98/      42 :                     ;------------------------------------------------------------------------------------------
+(1)   99/      42 :                     
+(1)  100/      42 :                     
+(1)  101/      42 :                     ; =========================================================================================
+(1)  102/      42 :                     ; Space for the main stack
+(1)  103/      42 :                     ; =========================================================================================
+(1)  104/      42 :                     
+(1)  105/      FF :                     					ORG 00FFH
+(1)  106/      FF :                     StackTop:
+(1)  107/      FF :                     
+(1)  108/      FF :                     ;------------------------------------------------------------------------------------------
+(1)  109/      FF :                     
+(1)  110/      FF :                     
+(1)  111/      FF :                     ; =========================================================================================
+(1)  112/      FF :                     ; Includes
+(1)  113/      FF :                     ; =========================================================================================
+(1)  114/      FF :                     
+(1)  115/      FF :                     					INCLUDE "Graphics1861.asm"
+(2)    1/      FF : =>TRUE              					IF UseGraphics == "TRUE"
+(2)    2/      FF :                     ; =========================================================================================
+(2)    3/      FF :                     ; Display buffer
+(2)    4/      FF :                     ; =========================================================================================
+(2)    5/     100 :                     					ORG 0100H
+(2)    6/     100 :                     
+(2)    7/     100 : =>FALSE             					IF Resolution == "64x32"
+(2)    8/     100 :                     DisplayBuffer:		db 256 dup (?)
+(2)    9/     100 : [7]                 					ENDIF
+(2)   10/     100 :                     
+(2)   11/     100 : =>TRUE              					IF Resolution == "64x64"
+(2)   12/     100 :                     DisplayBuffer:		db 512 dup (?)
+(2)   13/     300 : [11]                					ENDIF
+(2)   14/     300 :                     
+(2)   15/     300 : =>FALSE             					IF Resolution == "64x128"
+(2)   16/     300 :                     DisplayBuffer:		db 1024 dup (?)
+(2)   17/     300 : [15]                					ENDIF
+(2)   18/     300 :                     
+ AS V1.42 Beta [Bld 83] - source file Test.asm(Graphics1861.asm) - page 4 - 6/3/2020 15:51:22
+
+
+(2)   19/     300 : =>FALSE             					IF BackBuffer <> "OFF"
+(2)   20/     300 :                     
+(2)   21/     300 :                     					IF Resolution == "64x32"
+(2)   22/     300 :                     DoubleBuffer:		db 256 dup (?)
+(2)   23/     300 : [21]                					ENDIF
+(2)   24/     300 :                     
+(2)   25/     300 :                     					IF Resolution == "64x64"
+(2)   26/     300 :                     DoubleBuffer:		db 512 dup (?)
+(2)   27/     300 : [25]                					ENDIF
+(2)   28/     300 :                     
+(2)   29/     300 :                     					IF Resolution == "64x128"
+(2)   30/     300 :                     DoubleBuffer:		db 1024 dup (?)
+(2)   31/     300 : [29]                					ENDIF
+(2)   32/     300 : [19]                					ENDIF
+(2)   33/     300 :                     
+(2)   34/     300 :                     Reserved:			db 8 dup (?)
+(2)   35/     308 :                     
+(2)   36/     308 :                     ;------------------------------------------------------------------------------------------
+(2)   37/     308 :                     
+(2)   38/     308 :                     
+(2)   39/     308 :                     ; =========================================================================================
+(2)   40/     308 :                     ; Interrupt and DMA service routine for the CDP1861 to display an effective resolution
+(2)   41/     308 :                     ; of 64 x 32 pixels, using a display buffer of 256 bytes.
+(2)   42/     308 :                     ; =========================================================================================
+(2)   43/     308 :                     
+(2)   44/     308 : =>FALSE             					IF Resolution == "64x32"
+(2)   45/     308 :                     
+(2)   46/     308 :                     INT_Exit:			LDXA
+(2)   47/     308 :                     					RET
+(2)   48/     308 :                     DisplayInt:			DEC  R2
+(2)   49/     308 :                     					SAV
+(2)   50/     308 :                     					DEC  R2
+(2)   51/     308 :                     					STR  R2
+(2)   52/     308 :                     					NOP
+(2)   53/     308 :                     					NOP
+(2)   54/     308 :                     					NOP
+(2)   55/     308 :                     
+(2)   56/     308 :                     					IF BackBuffer <> "SWAP"
+(2)   57/     308 :                     					LDI  hi(DisplayBuffer)
+(2)   58/     308 : [56]                					ENDIF
+(2)   59/     308 :                     
+(2)   60/     308 :                     					IF BackBuffer == "SWAP"
+(2)   61/     308 :                     					GHI  R7
+(2)   62/     308 : [60]                					ENDIF
+(2)   63/     308 :                     
+(2)   64/     308 :                     					PHI  R0
+(2)   65/     308 :                     					LDI  00H
+(2)   66/     308 :                     					PLO  R0
+(2)   67/     308 :                     INT_Loop:			GLO  R0
+(2)   68/     308 :                     					SEX  R2
+(2)   69/     308 :                     					SEX  R2
+(2)   70/     308 :                     					DEC  R0
+(2)   71/     308 :                     					PLO  R0
+(2)   72/     308 :                     					SEX  R2
+(2)   73/     308 :                     					DEC  R0
+(2)   74/     308 :                     					PLO  R0
+(2)   75/     308 :                     					SEX  R2
+(2)   76/     308 :                     					DEC  R0
+(2)   77/     308 :                     					PLO  R0
+(2)   78/     308 :                     					BN1  INT_Loop
+ AS V1.42 Beta [Bld 83] - source file Test.asm(Graphics1861.asm) - page 5 - 6/3/2020 15:51:22
+
+
+(2)   79/     308 :                     					BR   INT_Exit
+(2)   80/     308 :                     
+(2)   81/     308 : [44]                					ENDIF
+(2)   82/     308 :                     				
+(2)   83/     308 :                     ;------------------------------------------------------------------------------------------
+(2)   84/     308 :                     
+(2)   85/     308 :                     
+(2)   86/     308 :                     ; =========================================================================================
+(2)   87/     308 :                     ; Interrupt and DMA service routine for the CDP1861 to display an effective resolution
+(2)   88/     308 :                     ; of 64 x 64 pixels, using a display buffer of 512 bytes.
+(2)   89/     308 :                     ; =========================================================================================
+(2)   90/     308 :                     
+(2)   91/     308 : =>TRUE              					IF Resolution == "64x64"
+(2)   92/     308 :                     
+(2)   93/     308 : 72                  INT_Exit:			LDXA
+(2)   94/     309 : 70                  					RET
+(2)   95/     30A : C4                  DisplayInt:			NOP
+(2)   96/     30B : 22                  					DEC  R2
+(2)   97/     30C : 78                  					SAV
+(2)   98/     30D : 22                  					DEC  R2
+(2)   99/     30E : 52                  					STR  R2
+(2)  100/     30F :                     
+(2)  101/     30F : =>TRUE              					IF BackBuffer <> "SWAP"
+(2)  102/     30F : F8 01               					LDI  hi(DisplayBuffer)
+(2)  103/     311 : [101]               					ENDIF
+(2)  104/     311 :                     
+(2)  105/     311 : =>FALSE             					IF BackBuffer == "SWAP"
+(2)  106/     311 :                     					GHI  R7
+(2)  107/     311 : [105]               					ENDIF
+(2)  108/     311 :                     
+(2)  109/     311 : B0                  					PHI  R0
+(2)  110/     312 : F8 00               					LDI  00H
+(2)  111/     314 : A0                  					PLO  R0
+(2)  112/     315 : C4                  					NOP
+(2)  113/     316 : C4                  					NOP
+(2)  114/     317 : E2                  					SEX  R2
+(2)  115/     318 : 80                  INT_Loop:			GLO  R0
+(2)  116/     319 : E2                  					SEX  R2
+(2)  117/     31A : 20                  					DEC  R0
+(2)  118/     31B : A0                  					PLO  R0
+(2)  119/     31C : E2                  					SEX  R2
+(2)  120/     31D : 3C 18               					BN1  INT_Loop
+(2)  121/     31F : 80                  INT_Rest:			GLO  R0
+(2)  122/     320 : E2                  					SEX  R2
+(2)  123/     321 : 20                  					DEC  R0
+(2)  124/     322 : A0                  					PLO  R0
+(2)  125/     323 : 34 1F               					B1   INT_Rest
+(2)  126/     325 : 30 08               					BR   INT_Exit
+(2)  127/     327 :                     
+(2)  128/     327 : [91]                					ENDIF
+(2)  129/     327 :                     
+(2)  130/     327 :                     ;------------------------------------------------------------------------------------------
+(2)  131/     327 :                     
+(2)  132/     327 :                     
+(2)  133/     327 :                     ; =========================================================================================
+(2)  134/     327 :                     ; Interrupt and DMA service routine for the CDP1861 to display an effective resolution
+(2)  135/     327 :                     ; of 64 x 128 pixels, using a display buffer of 1024 bytes.
+(2)  136/     327 :                     ; =========================================================================================
+(2)  137/     327 :                     
+(2)  138/     327 : =>FALSE             					IF Resolution == "64x128"
+ AS V1.42 Beta [Bld 83] - source file Test.asm(Graphics1861.asm) - page 6 - 6/3/2020 15:51:22
+
+
+(2)  139/     327 :                     
+(2)  140/     327 :                     INT_Exit:			LDXA
+(2)  141/     327 :                     					RET
+(2)  142/     327 :                     DisplayInt:			NOP
+(2)  143/     327 :                     					DEC  R2
+(2)  144/     327 :                     					SAV
+(2)  145/     327 :                     					DEC  R2
+(2)  146/     327 :                     					STR  R2
+(2)  147/     327 :                     					SEX  R2					
+(2)  148/     327 :                     					SEX  R2
+(2)  149/     327 :                     					
+(2)  150/     327 :                     					IF BackBuffer <> "SWAP"
+(2)  151/     327 :                     					LDI  hi(DisplayBuffer)
+(2)  152/     327 : [150]               					ENDIF
+(2)  153/     327 :                     
+(2)  154/     327 :                     					IF BackBuffer == "SWAP"
+(2)  155/     327 :                     					GHI  R7
+(2)  156/     327 : [154]               					ENDIF
+(2)  157/     327 :                     
+(2)  158/     327 :                     					PHI  R0
+(2)  159/     327 :                     					LDI  00H
+(2)  160/     327 :                     					PLO  R0
+(2)  161/     327 :                     					BR   INT_Exit
+(2)  162/     327 :                     
+(2)  163/     327 : [138]               					ENDIF
+(2)  164/     327 :                     
+(2)  165/     327 :                     ;------------------------------------------------------------------------------------------
+(2)  166/     327 :                     
+(2)  167/     327 :                     
+(2)  168/     327 :                     ; =========================================================================================
+(2)  169/     327 :                     ; Parameters:
+(2)  170/     327 :                     ; RF		Pointer to the image
+(2)  171/     327 :                     ;
+(2)  172/     327 :                     ; Internal:
+(2)  173/     327 :                     ; RE		Pointer to video buffer
+(2)  174/     327 :                     ; =========================================================================================
+(2)  175/     327 :                     
+(2)  176/     327 :                     					
+(2)  177/     327 : =>TRUE              CopyImage:			IF BackBuffer == "OFF"
+(2)  178/     327 : F8 01               					LDI  hi(DisplayBuffer)			; prepare the pointer to the video buffer
+(2)  179/     329 : BE                  					PHI  RE
+(2)  180/     32A : [177]               					ENDIF
+(2)  181/     32A :                     
+(2)  182/     32A : =>FALSE             					IF BackBuffer == "COPY"
+(2)  183/     32A :                     					LDI  hi(DoubleBuffer)			; prepare the pointer to the back buffer
+(2)  184/     32A :                     					PHI  RE
+(2)  185/     32A : [182]               					ENDIF
+(2)  186/     32A :                     
+(2)  187/     32A : =>FALSE             					IF BackBuffer == "SWAP"
+(2)  188/     32A :                     					GLO  R7							; prepare the pointer to the current back buffer
+(2)  189/     32A :                     					PHI  RE
+(2)  190/     32A : [187]               					ENDIF
+(2)  191/     32A :                     
+(2)  192/     32A : F8 00               					LDI  00H
+(2)  193/     32C : AE                  					PLO  RE
+(2)  194/     32D :                     
+(2)  195/     32D : 4F                  CI_Loop:			LDA  RF
+(2)  196/     32E : 5E                  					STR  RE
+(2)  197/     32F : 1E                  					INC  RE
+(2)  198/     330 : 8E                  					GLO  RE
+ AS V1.42 Beta [Bld 83] - source file Test.asm(Graphics1861.asm) - page 7 - 6/3/2020 15:51:22
+
+
+(2)  199/     331 : 3A 2D               					BNZ  CI_Loop
+(2)  200/     333 :                     					
+(2)  201/     333 : =>TRUE              					IF Resolution == "64x64"					
+(2)  202/     333 : =>TRUE              					IF BackBuffer == "OFF"
+(2)  203/     333 : F8 02               					LDI   hi(DisplayBuffer) + 1
+(2)  204/     335 : [202]               					ENDIF
+(2)  205/     335 :                     
+(2)  206/     335 : =>FALSE             					IF BackBuffer == "COPY"
+(2)  207/     335 :                     					LDI   hi(DoubleBuffer) + 1
+(2)  208/     335 : [206]               					ENDIF
+(2)  209/     335 :                     
+(2)  210/     335 : =>FALSE             					IF BackBuffer == "SWAP"
+(2)  211/     335 :                     					GLO  R7
+(2)  212/     335 :                     					ADI	 01H
+(2)  213/     335 : [210]               					ENDIF
+(2)  214/     335 :                     
+(2)  215/     335 : 52                  					STR  R2
+(2)  216/     336 : 9E                  					GHI  RE
+(2)  217/     337 : F5                  					SD
+(2)  218/     338 : 33 2D               					BDF  CI_Loop				
+(2)  219/     33A : [201]               					ENDIF
+(2)  220/     33A :                     
+(2)  221/     33A : =>FALSE             					IF Resolution == "64x128"
+(2)  222/     33A :                     					IF BackBuffer == "OFF"
+(2)  223/     33A :                     					LDI   hi(DisplayBuffer) + 3
+(2)  224/     33A : [222]               					ENDIF
+(2)  225/     33A :                     
+(2)  226/     33A :                     					IF BackBuffer == "COPY"
+(2)  227/     33A :                     					LDI   hi(DoubleBuffer) + 3
+(2)  228/     33A : [226]               					ENDIF
+(2)  229/     33A :                     
+(2)  230/     33A :                     					IF BackBuffer == "SWAP"
+(2)  231/     33A :                     					GLO  R7
+(2)  232/     33A :                     					ADI  03H
+(2)  233/     33A : [230]               					ENDIF
+(2)  234/     33A :                     
+(2)  235/     33A :                     					STR  R2
+(2)  236/     33A :                     					GHI  RE
+(2)  237/     33A :                     					SD
+(2)  238/     33A :                     					BDF  CI_Loop				
+(2)  239/     33A : [221]               					ENDIF
+(2)  240/     33A :                     					
+(2)  241/     33A : D5                  					SEP  R5					
+(2)  242/     33B :                     
+(2)  243/     33B :                     ;------------------------------------------------------------------------------------------
+(2)  244/     33B :                     
+(2)  245/     33B :                     
+(2)  246/     33B :                     ; =========================================================================================
+(2)  247/     33B :                     ; Parameters:
+(2)  248/     33B :                     ; RF		Value for filling
+(2)  249/     33B :                     ;
+(2)  250/     33B :                     ; Internal:
+(2)  251/     33B :                     ; RE		Pointer to video buffer
+(2)  252/     33B :                     ; =========================================================================================
+(2)  253/     33B :                     
+(2)  254/     33B : =>TRUE              FillScreen:			IF BackBuffer == "OFF"
+(2)  255/     33B : F8 01               					LDI  hi(DisplayBuffer)			; prepare the pointer to the video buffer
+(2)  256/     33D : BE                  					PHI  RE
+(2)  257/     33E : [254]               					ENDIF
+(2)  258/     33E :                     
+ AS V1.42 Beta [Bld 83] - source file Test.asm(Graphics1861.asm) - page 8 - 6/3/2020 15:51:22
+
+
+(2)  259/     33E : =>FALSE             					IF BackBuffer == "COPY"
+(2)  260/     33E :                     					LDI  hi(DoubleBuffer)			; prepare the pointer to the back buffer
+(2)  261/     33E :                     					PHI  RE
+(2)  262/     33E : [259]               					ENDIF
+(2)  263/     33E :                     
+(2)  264/     33E : =>FALSE             					IF BackBuffer == "SWAP"
+(2)  265/     33E :                     					GLO  R7							; prepare the pointer to the current back buffer
+(2)  266/     33E :                     					PHI  RE
+(2)  267/     33E : [264]               					ENDIF
+(2)  268/     33E :                     
+(2)  269/     33E : F8 00               					LDI  00H
+(2)  270/     340 : AE                  					PLO  RE
+(2)  271/     341 :                     
+(2)  272/     341 : 9F                  FS_Loop:			GHI  RF
+(2)  273/     342 : 5E                  					STR  RE
+(2)  274/     343 : 1E                  					INC  RE
+(2)  275/     344 : 8E                  					GLO  RE
+(2)  276/     345 : 3A 41               					BNZ  FS_Loop
+(2)  277/     347 :                     					
+(2)  278/     347 : =>TRUE              					IF Resolution == "64x64"
+(2)  279/     347 : =>TRUE              					IF BackBuffer == "OFF"
+(2)  280/     347 : F8 02               					LDI   hi(DisplayBuffer) + 1
+(2)  281/     349 : [279]               					ENDIF
+(2)  282/     349 :                     
+(2)  283/     349 : =>FALSE             					IF BackBuffer == "COPY"
+(2)  284/     349 :                     					LDI   hi(DoubleBuffer) + 1
+(2)  285/     349 : [283]               					ENDIF
+(2)  286/     349 :                     
+(2)  287/     349 : =>FALSE             					IF BackBuffer == "SWAP"
+(2)  288/     349 :                     					GLO  R7
+(2)  289/     349 :                     					ADI  01H
+(2)  290/     349 : [287]               					ENDIF
+(2)  291/     349 :                     
+(2)  292/     349 : 52                  					STR  R2
+(2)  293/     34A : 9E                  					GHI  RE
+(2)  294/     34B : F5                  					SD
+(2)  295/     34C : 33 41               					BDF  FS_Loop				
+(2)  296/     34E : [278]               					ENDIF
+(2)  297/     34E :                     
+(2)  298/     34E : =>FALSE             					IF Resolution == "64x128"
+(2)  299/     34E :                     					IF BackBuffer == "OFF"
+(2)  300/     34E :                     					LDI   hi(DisplayBuffer) + 3
+(2)  301/     34E : [299]               					ENDIF
+(2)  302/     34E :                     
+(2)  303/     34E :                     					IF BackBuffer == "COPY"
+(2)  304/     34E :                     					LDI   hi(DoubleBuffer) + 3
+(2)  305/     34E : [303]               					ENDIF
+(2)  306/     34E :                     
+(2)  307/     34E :                     					IF BackBuffer == "SWAP"
+(2)  308/     34E :                     					GLO  R7
+(2)  309/     34E :                     					ADI  03H
+(2)  310/     34E : [307]               					ENDIF
+(2)  311/     34E :                     
+(2)  312/     34E :                     					STR  R2
+(2)  313/     34E :                     					GHI  RE
+(2)  314/     34E :                     					SD
+(2)  315/     34E :                     					BDF  FS_Loop				
+(2)  316/     34E : [298]               					ENDIF
+(2)  317/     34E :                     					
+(2)  318/     34E : D5                  					SEP  R5					
+ AS V1.42 Beta [Bld 83] - source file Test.asm(Graphics1861.asm) - page 9 - 6/3/2020 15:51:22
+
+
+(2)  319/     34F :                     
+(2)  320/     34F :                     ;------------------------------------------------------------------------------------------
+(2)  321/     34F :                     
+(2)  322/     34F :                     
+(2)  323/     34F :                     ; =========================================================================================
+(2)  324/     34F :                     ; Parameters:
+(2)  325/     34F :                     ; RE.0		X coordinate of the sprite
+(2)  326/     34F :                     ; RE.1		Y coordinate of the sprite
+(2)  327/     34F :                     ; RF		Pointer to sprite
+(2)  328/     34F :                     ; RD		Size of the sprite in bytes
+(2)  329/     34F :                     ;
+(2)  330/     34F :                     ; Internal:
+(2)  331/     34F :                     ; RC		Pointer to video memory
+(2)  332/     34F :                     ; =========================================================================================
+(2)  333/     34F :                     
+(2)  334/     34F : =>TRUE              DrawSprite:			IF BackBuffer == "OFF"
+(2)  335/     34F : F8 01               					LDI  hi(DisplayBuffer)			; prepare the pointer to the video buffer
+(2)  336/     351 : [334]               					ENDIF
+(2)  337/     351 :                     
+(2)  338/     351 : =>FALSE             					IF BackBuffer == "COPY"
+(2)  339/     351 :                     					LDI  hi(DoubleBuffer)			; prepare the pointer to the back buffer
+(2)  340/     351 : [338]               					ENDIF
+(2)  341/     351 :                     
+(2)  342/     351 : =>FALSE             					IF BackBuffer == "SWAP"
+(2)  343/     351 :                     					GLO  R7							; prepare the pointer to the current back buffer
+(2)  344/     351 : [342]               					ENDIF
+(2)  345/     351 :                     					
+(2)  346/     351 : BC                  					PHI  RC							; DisplayBuffer + Y * 8 + X / 8
+(2)  347/     352 : 9E                  					GHI  RE							; result goes to RC
+(2)  348/     353 :                     
+(2)  349/     353 : =>FALSE             					IF Resolution == "64x32"
+(2)  350/     353 :                     					ANI  1FH						; between 0 - 31
+(2)  351/     353 : [349]               					ENDIF
+(2)  352/     353 :                     				
+(2)  353/     353 : =>TRUE              					IF Resolution == "64x64"
+(2)  354/     353 : FA 3F               					ANI  3FH						; or 0 - 63
+(2)  355/     355 : [353]               					ENDIF
+(2)  356/     355 :                     
+(2)  357/     355 : =>FALSE             					IF Resolution == "64x128"
+(2)  358/     355 :                     					ANI  7FH						; or 0 - 127
+(2)  359/     355 : [357]               					ENDIF
+(2)  360/     355 :                     
+(2)  361/     355 : FE                  					SHL
+(2)  362/     356 : FE                  					SHL
+(2)  363/     357 : FE                  					SHL
+(2)  364/     358 : AC                  					PLO  RC
+(2)  365/     359 : 3B 5F               					BNF  DSP_SkipIncrement
+(2)  366/     35B : 9C                  					GHI  RC
+(2)  367/     35C : FC 01               					ADI  01H
+(2)  368/     35E : BC                  					PHI  RC
+(2)  369/     35F :                     					
+(2)  370/     35F : 8C                  DSP_SkipIncrement:	GLO  RC
+(2)  371/     360 : 52                  					STR  R2
+(2)  372/     361 : 8E                  					GLO  RE
+(2)  373/     362 : FA 3F               					ANI  3FH
+(2)  374/     364 : F6                  					SHR
+(2)  375/     365 : F6                  					SHR
+(2)  376/     366 : F6                  					SHR
+(2)  377/     367 : F4                  					ADD
+(2)  378/     368 : AC                  					PLO  RC
+ AS V1.42 Beta [Bld 83] - source file Test.asm(Graphics1861.asm) - page 10 - 6/3/2020 15:51:22
+
+
+(2)  379/     369 : 8E                  					GLO  RE							; calculate the number of required shifts 
+(2)  380/     36A : FA 07               					ANI  07H						; result to RE.1, replacing the Y coordinate
+(2)  381/     36C : BE                  					PHI  RE							; RE.0 will be used later to count the shifts
+(2)  382/     36D :                     
+(2)  383/     36D : 8D                  DSP_ByteLoop:		GLO  RD							; exit if all bytes of the sprite have been drawn
+(2)  384/     36E : 32 9F               					BZ   DSP_Exit
+(2)  385/     370 :                     					
+(2)  386/     370 : =>FALSE             					IF Resolution == "64x32"		; or if we are about to draw outside the video buffer
+(2)  387/     370 :                     					IF BackBuffer == "OFF"
+(2)  388/     370 :                     					LDI   hi(DisplayBuffer)
+(2)  389/     370 : [387]               					ENDIF
+(2)  390/     370 :                     
+(2)  391/     370 :                     					IF BackBuffer == "COPY"
+(2)  392/     370 :                     					LDI   hi(DoubleBuffer)
+(2)  393/     370 : [391]               					ENDIF
+(2)  394/     370 :                     
+(2)  395/     370 :                     					IF BackBuffer == "SWAP"
+(2)  396/     370 :                     					GLO  R7
+(2)  397/     370 : [395]               					ENDIF
+(2)  398/     370 : [386]               					ENDIF
+(2)  399/     370 :                     
+(2)  400/     370 : =>TRUE              					IF Resolution == "64x64"
+(2)  401/     370 : =>TRUE              					IF BackBuffer == "OFF"
+(2)  402/     370 : F8 02               					LDI   hi(DisplayBuffer) + 1
+(2)  403/     372 : [401]               					ENDIF
+(2)  404/     372 :                     
+(2)  405/     372 : =>FALSE             					IF BackBuffer == "COPY"
+(2)  406/     372 :                     					LDI   hi(DoubleBuffer) + 1
+(2)  407/     372 : [405]               					ENDIF
+(2)  408/     372 :                     
+(2)  409/     372 : =>FALSE             					IF BackBuffer == "SWAP"
+(2)  410/     372 :                     					GLO  R7
+(2)  411/     372 :                     					ADI  01H
+(2)  412/     372 : [409]               					ENDIF
+(2)  413/     372 : [400]               					ENDIF
+(2)  414/     372 :                     
+(2)  415/     372 : =>FALSE             					IF Resolution == "64x128"
+(2)  416/     372 :                     					IF BackBuffer == "OFF"
+(2)  417/     372 :                     					LDI   hi(DisplayBuffer) + 3
+(2)  418/     372 : [416]               					ENDIF
+(2)  419/     372 :                     
+(2)  420/     372 :                     					IF BackBuffer == "COPY"
+(2)  421/     372 :                     					LDI   hi(DoubleBuffer) + 3
+(2)  422/     372 : [420]               					ENDIF
+(2)  423/     372 :                     
+(2)  424/     372 :                     					IF BackBuffer == "SWAP"
+(2)  425/     372 :                     					GLO  R7
+(2)  426/     372 :                     					ADI	 03H
+(2)  427/     372 : [424]               					ENDIF
+(2)  428/     372 : [415]               					ENDIF
+(2)  429/     372 :                     
+(2)  430/     372 : 52                  					STR  R2
+(2)  431/     373 : 9C                  					GHI  RC
+(2)  432/     374 : F5                  					SD
+(2)  433/     375 : 3B 9F               					BNF  DSP_Exit
+(2)  434/     377 : 0F                  					LDN	 RF							; load the next byte of the sprite into RB.0
+(2)  435/     378 : AB                  					PLO  RB
+(2)  436/     379 : F8 00               					LDI  00H						; set RB.1 to OOH
+(2)  437/     37B : BB                  					PHI  RB
+(2)  438/     37C : 2D                  					DEC  RD							; decrement the sprite's byte counter
+ AS V1.42 Beta [Bld 83] - source file Test.asm(Graphics1861.asm) - page 11 - 6/3/2020 15:51:22
+
+
+(2)  439/     37D : 1F                  					INC  RF							; increment the pointer to the sprite's bytes
+(2)  440/     37E : 9E                  					GHI  RE							; prepare the shift counter
+(2)  441/     37F : AE                  					PLO  RE
+(2)  442/     380 : 8E                  DSP_ShiftLoop:		GLO  RE							; exit the loop if all shifts have been performed
+(2)  443/     381 : 32 8C               					BZ   DSP_ShiftExit
+(2)  444/     383 : 2E                  					DEC  RE							; decrement the shift counter
+(2)  445/     384 : 8B                  					GLO  RB							; shift the values in RB
+(2)  446/     385 : F6                  					SHR
+(2)  447/     386 : AB                  					PLO  RB
+(2)  448/     387 : 9B                  					GHI  RB
+(2)  449/     388 : 76                  					RSHR
+(2)  450/     389 : BB                  					PHI  RB
+(2)  451/     38A : 30 80               					BR   DSP_ShiftLoop
+(2)  452/     38C : EC                  DSP_ShiftExit:		SEX  RC							; store the shifted bytes in the video buffer
+(2)  453/     38D : 8B                  					GLO  RB
+(2)  454/     38E : F3                  					XOR
+(2)  455/     38F : 5C                  					STR  RC
+(2)  456/     390 : 1C                  					INC  RC
+(2)  457/     391 : 9B                  					GHI  RB
+(2)  458/     392 : F3                  					XOR
+(2)  459/     393 : 5C                  					STR  RC
+(2)  460/     394 : E2                  					SEX  R2
+(2)  461/     395 : 8C                  					GLO  RC							; advance the video buffer pointer to the next line
+(2)  462/     396 : FC 07               					ADI  07H
+(2)  463/     398 : AC                  					PLO  RC
+(2)  464/     399 : 9C                  					GHI  RC
+(2)  465/     39A : 7C 00               					ADCI 00H
+(2)  466/     39C : BC                  					PHI  RC
+(2)  467/     39D : 30 6D               					BR   DSP_ByteLoop
+(2)  468/     39F : D5                  DSP_Exit			SEP  R5
+(2)  469/     3A0 :                     
+(2)  470/     3A0 :                     ;------------------------------------------------------------------------------------------
+(2)  471/     3A0 :                     
+(2)  472/     3A0 :                     
+(2)  473/     3A0 :                     ; =========================================================================================
+(2)  474/     3A0 :                     ; Parameters:
+(2)  475/     3A0 :                     ; ----
+(2)  476/     3A0 :                     ;
+(2)  477/     3A0 :                     ; Internal:
+(2)  478/     3A0 :                     ; RE		Pointer to video buffer
+(2)  479/     3A0 :                     ; RF		Pointer to back buffer
+(2)  480/     3A0 :                     ; =========================================================================================
+(2)  481/     3A0 :                     					
+(2)  482/     3A0 : =>FALSE             CopyBackBuffer:		IF BackBuffer <> "OFF"
+(2)  483/     3A0 :                     
+(2)  484/     3A0 :                     					IF BackBuffer == "COPY"					
+(2)  485/     3A0 :                     					LDI  hi(DisplayBuffer)			; prepare the pointer to the video buffer
+(2)  486/     3A0 :                     					PHI  RE
+(2)  487/     3A0 :                     					LDI  lo(DisplayBuffer)
+(2)  488/     3A0 :                     					PLO  RE
+(2)  489/     3A0 :                     
+(2)  490/     3A0 :                     					LDI  hi(DoubleBuffer)			; prepare the pointer to the back buffer
+(2)  491/     3A0 :                     					PHI  RF
+(2)  492/     3A0 :                     					LDI  lo(DoubleBuffer)
+(2)  493/     3A0 :                     					PLO  RF
+(2)  494/     3A0 :                     					
+(2)  495/     3A0 :                     CBB_Loop:			LDA  RF
+(2)  496/     3A0 :                     					STR  RE
+(2)  497/     3A0 :                     					INC  RE
+(2)  498/     3A0 :                     					GLO  RE
+ AS V1.42 Beta [Bld 83] - source file Test.asm(Graphics1861.asm) - page 12 - 6/3/2020 15:51:22
+
+
+(2)  499/     3A0 :                     					BNZ  CBB_Loop
+(2)  500/     3A0 :                     					
+(2)  501/     3A0 :                     					IF Resolution == "64x64"
+(2)  502/     3A0 :                     					LDI   hi(DisplayBuffer) + 1
+(2)  503/     3A0 : [501]               					ENDIF
+(2)  504/     3A0 :                     
+(2)  505/     3A0 :                     					IF Resolution == "64x128"
+(2)  506/     3A0 :                     					LDI   hi(DisplayBuffer) + 3
+(2)  507/     3A0 : [505]               					ENDIF
+(2)  508/     3A0 :                     
+(2)  509/     3A0 :                     					STR  R2
+(2)  510/     3A0 :                     					GHI  RE
+(2)  511/     3A0 :                     					SD
+(2)  512/     3A0 :                     					BDF  CBB_Loop
+(2)  513/     3A0 : [484]               					ENDIF
+(2)  514/     3A0 :                     
+(2)  515/     3A0 :                     					IF BackBuffer == "SWAP"
+(2)  516/     3A0 :                     					GHI  R7
+(2)  517/     3A0 :                     					SMI  hi(DisplayBuffer)
+(2)  518/     3A0 :                     					BZ   CBB_Swap
+(2)  519/     3A0 :                     					LDI  hi(DisplayBuffer)
+(2)  520/     3A0 :                     					PHI  R7
+(2)  521/     3A0 :                     					LDI  hi(DoubleBuffer)
+(2)  522/     3A0 :                     					PLO  R7
+(2)  523/     3A0 :                     					BR   CBB_Exit
+(2)  524/     3A0 :                     CBB_Swap:			LDI  hi(DoubleBuffer)
+(2)  525/     3A0 :                     					PHI  R7
+(2)  526/     3A0 :                     					LDI  hi(DisplayBuffer)
+(2)  527/     3A0 :                     					PLO  R7
+(2)  528/     3A0 :                     					BR   CBB_Exit
+(2)  529/     3A0 : [515]               					ENDIF
+(2)  530/     3A0 :                     
+(2)  531/     3A0 : [482]               					ENDIF					
+(2)  532/     3A0 : D5                  CBB_Exit:			SEP  R5		
+(2)  533/     3A1 :                     
+(2)  534/     3A1 :                     ;------------------------------------------------------------------------------------------
+(2)  535/     3A1 :                     
+(2)  536/     3A1 : [1]                 					ENDIF
+(2)  537/     3A1 :                     
+(1)  116/     3A1 :                     					;INCLUDE "Console1861.asm"
+(1)  117/     3A1 :                     					INCLUDE "Conversion.asm"
+(2)    1/     3A1 : =>TRUE              					IF UseConversion == "TRUE"
+(2)    2/     3A1 :                     
+(2)    3/     3A1 :                     ; =========================================================================================
+(2)    4/     3A1 :                     ; Conversion of a byte to a decimal string
+(2)    5/     3A1 :                     ; 
+(2)    6/     3A1 :                     ; Parameters:
+(2)    7/     3A1 :                     ; RF.1				Byte to convert to a decimal string.
+(2)    8/     3A1 :                     ;
+(2)    9/     3A1 :                     ; Internal:
+(2)   10/     3A1 :                     ; RF.0				Temporary store for digits.
+(2)   11/     3A1 :                     ; RE				Pointer to the decimal constants.
+(2)   12/     3A1 :                     ; RD				Pointer to the string buffer.
+(2)   13/     3A1 :                     ; =========================================================================================
+(2)   14/     3A1 :                     
+(2)   15/     3A1 : F8 03               ByteToString:		LDI  hi(BTS_Constants)
+(2)   16/     3A3 : BE                  					PHI  RE
+(2)   17/     3A4 : F8 C8               					LDI  lo(BTS_Constants)
+(2)   18/     3A6 : AE                  					PLO  RE
+(2)   19/     3A7 : F8 03               					LDI  hi(BTS_Result)
+ AS V1.42 Beta [Bld 83] - source file Test.asm(Conversion.asm) - page 13 - 6/3/2020 15:51:22
+
+
+(2)   20/     3A9 : BD                  					PHI  RD
+(2)   21/     3AA : F8 CC               					LDI  lo(BTS_Result)
+(2)   22/     3AC : AD                  					PLO  RD
+(2)   23/     3AD : 9F                  					GHI  RF
+(2)   24/     3AE : 52                  					STR  R2
+(2)   25/     3AF : F8 00               BTN_DigitLoop:		LDI  0000H
+(2)   26/     3B1 : AF                  					PLO  RF
+(2)   27/     3B2 : 0E                  BTN_SubLoop:		LDN  RE
+(2)   28/     3B3 : F5                  					SD
+(2)   29/     3B4 : 3B BA               					BNF  BTS_Overflow
+(2)   30/     3B6 : 52                  					STR  R2
+(2)   31/     3B7 : 1F                  					INC  RF
+(2)   32/     3B8 : 30 B2               					BR   BTN_SubLoop
+(2)   33/     3BA : 8F                  BTS_Overflow:		GLO  RF
+(2)   34/     3BB : FC 30               					ADI  0030H
+(2)   35/     3BD : 5D                  					STR  RD
+(2)   36/     3BE : 1D                  					INC  RD
+(2)   37/     3BF : 4E                  					LDA  RE
+(2)   38/     3C0 : FD 01               					SDI  0001H
+(2)   39/     3C2 : 3A AF               					BNZ  BTN_DigitLoop
+(2)   40/     3C4 : F8 00               BTS_Exit:			LDI  0000H
+(2)   41/     3C6 : 5D                  					STR  RD
+(2)   42/     3C7 : D5                  					SEP  R5
+(2)   43/     3C8 :                     
+(2)   44/     3C8 : 64 0A 01 00         BTS_Constants:		db  0064H, 000AH, 0001H, 0000H
+(2)   45/     3CC :                     
+(2)   46/     3CC :                     BTS_Result:			db 4 dup (?)
+(2)   47/     3D0 :                     
+(2)   48/     3D0 :                     
+(2)   49/     3D0 :                     ;------------------------------------------------------------------------------------------
+(2)   50/     3D0 :                     
+(2)   51/     3D0 :                     
+(2)   52/     3D0 :                     ; =========================================================================================
+(2)   53/     3D0 :                     ; Conversion of the lower four bits of a byte to a hexadecimal string
+(2)   54/     3D0 :                     ; 
+(2)   55/     3D0 :                     ; Parameters:
+(2)   56/     3D0 :                     ; RF.1				Byte to convert to a hexadecimal string.
+(2)   57/     3D0 :                     ;
+(2)   58/     3D0 :                     ; Internal:
+(2)   59/     3D0 :                     ; RF.0				Temporary store for digits.
+(2)   60/     3D0 :                     ; RE				Pointer to the string buffer.
+(2)   61/     3D0 :                     ; =========================================================================================
+(2)   62/     3D0 :                     
+(2)   63/     3D0 : F8 03               ByteToHexString:	LDI  hi(BTS_Result)
+(2)   64/     3D2 : BE                  					PHI  RE
+(2)   65/     3D3 : F8 CC               					LDI  lo(BTS_Result)
+(2)   66/     3D5 : AE                  					PLO  RE
+(2)   67/     3D6 : 9F                  					GHI  RF
+(2)   68/     3D7 : FA 0F               					ANI  000FH
+(2)   69/     3D9 : BF                  					PHI  RF
+(2)   70/     3DA : FF 0A               					SMI  000AH
+(2)   71/     3DC : 33 E4               					BDF  BTHS_Skip
+(2)   72/     3DE : 9F                  					GHI  RF
+(2)   73/     3DF : FC 30               					ADI  0030H
+(2)   74/     3E1 : C0 03 E7            					LBR	 BTHS_Exit
+(2)   75/     3E4 : 9F                  BTHS_Skip:			GHI  RF
+(2)   76/     3E5 : FC 37               					ADI  0037H
+(2)   77/     3E7 : 5E                  BTHS_Exit:			STR  RE
+(2)   78/     3E8 : 1E                  					INC  RE
+(2)   79/     3E9 : F8 00               					LDI  0000H
+ AS V1.42 Beta [Bld 83] - source file Test.asm(Conversion.asm) - page 14 - 6/3/2020 15:51:22
+
+
+(2)   80/     3EB : 5E                  					STR  RE
+(2)   81/     3EC : D5                  					SEP  R5
+(2)   82/     3ED :                     
+(2)   83/     3ED :                     ;------------------------------------------------------------------------------------------
+(2)   84/     3ED :                     
+(2)   85/     3ED : [1]                 					ENDIF
+(1)  118/     3ED :                     					INCLUDE "Random.asm"
+(2)    1/     3ED : =>TRUE              					IF UseRandom == "TRUE"
+(2)    2/     3ED :                     
+(2)    3/     3ED :                     ; =========================================================================================
+(2)    4/     3ED :                     ; Sets a bit seed value for the random number generator
+(2)    5/     3ED :                     ;
+(2)    6/     3ED :                     ; Parameters:
+(2)    7/     3ED :                     ; RF		The seed value (16 bit)
+(2)    8/     3ED :                     ; RF.0		The seed value (8 bit)
+(2)    9/     3ED :                     ;
+(2)   10/     3ED :                     ; Internal:
+(2)   11/     3ED :                     ; RE		Pointer to random state
+(2)   12/     3ED :                     ; =========================================================================================
+(2)   13/     3ED :                     
+(2)   14/     3ED : F8 25               SetSeed:			LDI  lo(RandomState)			; load the address of the random state
+(2)   15/     3EF : AE                  					PLO  RE
+(2)   16/     3F0 : F8 04               					LDI  hi(RandomState)
+(2)   17/     3F2 : BE                  					PHI  RE
+(2)   18/     3F3 : 8F                  					GLO  RF							; copy the values in RF to the random state
+(2)   19/     3F4 : 5E                  					STR  RE
+(2)   20/     3F5 :                     										
+(2)   21/     3F5 : =>FALSE             					IF RandomSize == 16
+(2)   22/     3F5 :                     					INC  RE
+(2)   23/     3F5 :                     					GHI  RF
+(2)   24/     3F5 :                     					STR  RE
+(2)   25/     3F5 : [21]                					ENDIF
+(2)   26/     3F5 :                     
+(2)   27/     3F5 : D5                  					SEP  R5
+(2)   28/     3F6 :                     
+(2)   29/     3F6 :                     ;------------------------------------------------------------------------------------------
+(2)   30/     3F6 :                     
+(2)   31/     3F6 :                     
+(2)   32/     3F6 :                     ; =========================================================================================
+(2)   33/     3F6 :                     ; Generates a 16 bit or 8 bit (pseudo) random number
+(2)   34/     3F6 :                     ;
+(2)   35/     3F6 :                     ; Parameters:
+(2)   36/     3F6 :                     ; RF		16 bit random return value
+(2)   37/     3F6 :                     ; RF.0		8 bit random return value
+(2)   38/     3F6 :                     ;
+(2)   39/     3F6 :                     ; Internal:
+(2)   40/     3F6 :                     ; RE		Pointer to random state
+(2)   41/     3F6 :                     ; RD.0		Loop counter
+(2)   42/     3F6 :                     ; =========================================================================================
+(2)   43/     3F6 :                     
+(2)   44/     3F6 : 8E                  GetRandom:			GLO  RE							; save registers RE and RD.0 on the stack
+(2)   45/     3F7 : 73                  					STXD
+(2)   46/     3F8 : 9E                  					GHI  RE
+(2)   47/     3F9 : 73                  					STXD
+(2)   48/     3FA : 8D                  					GLO  RD
+(2)   49/     3FB : 73                  					STXD
+(2)   50/     3FC :                     
+(2)   51/     3FC : F8 25               					LDI  lo(RandomState)			; load the address of the random state
+(2)   52/     3FE : AE                  					PLO  RE
+(2)   53/     3FF : F8 04               					LDI  hi(RandomState)
+ AS V1.42 Beta [Bld 83] - source file Test.asm(Random.asm) - page 15 - 6/3/2020 15:51:22
+
+
+(2)   54/     401 : BE                  					PHI  RE
+(2)   55/     402 :                     
+(2)   56/     402 : =>FALSE             					IF RandomSize == 16
+(2)   57/     402 :                     					LDI  10H						; set up the loop counter to shift 16 bits
+(2)   58/     402 :                     					PLO  RD
+(2)   59/     402 : =>TRUE              					ELSE
+(2)   60/     402 : F8 08               					LDI  08H						; set up the loop counter to shift 8 bits
+(2)   61/     404 : AD                  					PLO  RD
+(2)   62/     405 : [56]                					ENDIF
+(2)   63/     405 :                     
+(2)   64/     405 : 8F                  GRA_ShiftLoop:		GLO  RF							; shift the value in RF
+(2)   65/     406 : FE                  					SHL
+(2)   66/     407 : AF                  					PLO  RF
+(2)   67/     408 :                     
+(2)   68/     408 : =>FALSE             					IF RandomSize == 16
+(2)   69/     408 :                     					GHI  RF							; extend to 16 bits
+(2)   70/     408 :                     					RSHL
+(2)   71/     408 :                     					PHI  RF
+(2)   72/     408 : [68]                					ENDIF
+(2)   73/     408 :                     
+(2)   74/     408 : 0E                  					LDN  RE							; shift random state
+(2)   75/     409 : FE                  					SHL
+(2)   76/     40A :                     
+(2)   77/     40A : =>FALSE             					IF RandomSize == 16
+(2)   78/     40A :                     					STR  RE							; extend to 16 bits
+(2)   79/     40A :                     					INC  RE
+(2)   80/     40A :                     					LDN  RE
+(2)   81/     40A :                     					RSHL
+(2)   82/     40A :                     
+(2)   83/     40A : [77]                					ENDIF
+(2)   84/     40A :                     
+(2)   85/     40A : 3B 16               					BNF GRA_BitZero
+(2)   86/     40C : FB A7               GRA_BitOne:			XRI  0A7H						; XOR over the random state
+(2)   87/     40E : 5E                  					STR  RE
+(2)   88/     40F :                     
+(2)   89/     40F : =>FALSE             					IF RandomSize == 16
+(2)   90/     40F :                     					DEC  RE							; extend to 16 bits
+(2)   91/     40F :                     					LDN  RE
+(2)   92/     40F :                     					XRI  03EH
+(2)   93/     40F :                     					STR  RE
+(2)   94/     40F : [89]                					ENDIF
+(2)   95/     40F :                     
+(2)   96/     40F : 8F                  					GLO  RF							; add the bit to RF
+(2)   97/     410 : F9 01               					ORI  01H
+(2)   98/     412 : AF                  					PLO  RF
+(2)   99/     413 : C0 04 19            					LBR  GRA_TestLoop
+(2)  100/     416 : FB 35               GRA_BitZero:		XRI  035H						; XOR over the random state
+(2)  101/     418 : 5E                  					STR  RE
+(2)  102/     419 :                     
+(2)  103/     419 : =>FALSE             					IF RandomSize == 16
+(2)  104/     419 :                     					DEC  RE							; extend to 16 bits
+(2)  105/     419 :                     					LDN  RE
+(2)  106/     419 :                     					XRI  07AH
+(2)  107/     419 :                     					STR  RE	
+(2)  108/     419 : [103]               					ENDIF
+(2)  109/     419 :                     
+(2)  110/     419 : 2D                  GRA_TestLoop:		DEC  RD							; loop until all bits have been shifted
+(2)  111/     41A : 8D                  					GLO  RD
+(2)  112/     41B : 3A 05               					BNZ  GRA_ShiftLoop
+(2)  113/     41D :                     					
+ AS V1.42 Beta [Bld 83] - source file Test.asm(Random.asm) - page 16 - 6/3/2020 15:51:22
+
+
+(2)  114/     41D : 60                  					IRX							; restore registers RE and RD.0
+(2)  115/     41E : 72                  					LDXA
+(2)  116/     41F : AD                  					PLO  RD
+(2)  117/     420 : 72                  					LDXA
+(2)  118/     421 : BE                  					PHI  RE
+(2)  119/     422 : F0                  					LDX
+(2)  120/     423 : AE                  					PLO  RE
+(2)  121/     424 : D5                  					SEP  R5
+(2)  122/     425 :                     
+(2)  123/     425 :                     ;------------------------------------------------------------------------------------------
+(2)  124/     425 :                     
+(2)  125/     425 :                     
+(2)  126/     425 :                     ; =========================================================================================
+(2)  127/     425 :                     ; Data
+(2)  128/     425 :                     ; =========================================================================================
+(2)  129/     425 :                     
+(2)  130/     425 :                     RandomState:		db 2 dup (?)
+(2)  131/     427 :                     
+(2)  132/     427 :                     ;------------------------------------------------------------------------------------------
+(2)  133/     427 :                     
+(2)  134/     427 : [1]                 					ENDIF
+(1)  119/     427 :                     					INCLUDE "Text1861.asm"
+(2)    1/     427 : =>TRUE              					IF UseText == "TRUE"
+(2)    2/     427 :                     
+(2)    3/     427 :                     ; =========================================================================================
+(2)    4/     427 :                     ; Draws a zero terminated string at specified screen coordinates. 
+(2)    5/     427 :                     ;
+(2)    6/     427 :                     ; Parameters:
+(2)    7/     427 :                     ; RF		Pointer to the string
+(2)    8/     427 :                     ; RE.0		X coordinate
+(2)    9/     427 :                     ; RE.1		Y coordinate
+(2)   10/     427 :                     ; 
+(2)   11/     427 :                     ; Internal:
+(2)   12/     427 :                     ; =========================================================================================
+(2)   13/     427 :                     
+(2)   14/     427 : 0F                  DrawString:			LDN  RF							; get character, exit if 0
+(2)   15/     428 : AC                  					PLO  RC
+(2)   16/     429 : 32 4B               					BZ   DS_Exit
+(2)   17/     42B : 1F                  					INC  RF
+(2)   18/     42C :                     					
+(2)   19/     42C : 8F                  					GLO  RF							; push RF onto the stack
+(2)   20/     42D : 73                  					STXD
+(2)   21/     42E : 9F                  					GHI  RF
+(2)   22/     42F : 73                  					STXD
+(2)   23/     430 :                     					
+(2)   24/     430 : 8E                  					GLO  RE							; push RE onto the stack
+(2)   25/     431 : 73                  					STXD
+(2)   26/     432 : 9E                  					GHI  RE
+(2)   27/     433 : 73                  					STXD
+(2)   28/     434 :                     					
+(2)   29/     434 : D4                  					SEP  R4							; draw the character
+(2)   30/     435 : 04 4C               					dw DrawCharacter
+(2)   31/     437 :                     					
+(2)   32/     437 : 60                  					IRX								; restore RE
+(2)   33/     438 : 72                  					LDXA
+(2)   34/     439 : BE                  					PHI  RE
+(2)   35/     43A : F0                  					LDX
+(2)   36/     43B : AE                  					PLO  RE
+(2)   37/     43C :                     					
+(2)   38/     43C : 8F                  					GLO  RF							; advance the x coordinate by the
+ AS V1.42 Beta [Bld 83] - source file Test.asm(Text1861.asm) - page 17 - 6/3/2020 15:51:22
+
+
+(2)   39/     43D : 73                  					STXD							; width of the character + 1
+(2)   40/     43E : 60                  					IRX
+(2)   41/     43F : 8E                  					GLO  RE
+(2)   42/     440 : F4                  					ADD
+(2)   43/     441 : FC 01               					ADI  01H
+(2)   44/     443 : AE                  					PLO  RE
+(2)   45/     444 :                     					
+(2)   46/     444 : 60                  					IRX								; restore RF
+(2)   47/     445 : 72                  					LDXA
+(2)   48/     446 : BF                  					PHI  RF
+(2)   49/     447 : F0                  					LDX
+(2)   50/     448 : AF                  					PLO  RF
+(2)   51/     449 : 30 27               					BR   DrawString					; continue with the next character
+(2)   52/     44B :                     
+(2)   53/     44B : D5                  DS_Exit:			SEP  R5
+(2)   54/     44C :                     
+(2)   55/     44C :                     ;------------------------------------------------------------------------------------------
+(2)   56/     44C :                     
+(2)   57/     44C :                     
+(2)   58/     44C :                     ; =========================================================================================
+(2)   59/     44C :                     ; Draws a character at specified screen coordinates 
+(2)   60/     44C :                     ;
+(2)   61/     44C :                     ; Parameters:
+(2)   62/     44C :                     ; RE.0		X coordinate of the character
+(2)   63/     44C :                     ; RE.1		Y coordinate of the character
+(2)   64/     44C :                     ; RC.0		ASCII code of the character (20 - 5F)
+(2)   65/     44C :                     ; 
+(2)   66/     44C :                     ; Internal:
+(2)   67/     44C :                     ; RF		Pointer to the unpacked character's pattern
+(2)   68/     44C :                     ; RD		Pointer to the font
+(2)   69/     44C :                     ; RC.1		Temporary values
+(2)   70/     44C :                     ; =========================================================================================
+(2)   71/     44C :                     
+(2)   72/     44C : F8 CB               DrawCharacter:		LDI  lo(CharacterPattern)		; RF points to the buffer for the character pattern
+(2)   73/     44E : AF                  					PLO  RF
+(2)   74/     44F : F8 04               					LDI  hi(CharacterPattern)
+(2)   75/     451 : BF                  					PHI  RF
+(2)   76/     452 :                     					
+(2)   77/     452 : F8 D0               					LDI  lo(Font)					; RD points to the font
+(2)   78/     454 : AD                  					PLO  RD
+(2)   79/     455 : F8 04               					LDI  hi(Font)
+(2)   80/     457 : BD                  					PHI  RD
+(2)   81/     458 :                     					
+(2)   82/     458 : 8C                  					GLO  RC							; calculate the offset in the font
+(2)   83/     459 : FF 20               					SMI  020H						; (( character code - 20) / 2) * 6
+(2)   84/     45B : FA FE               					ANI  0FEH
+(2)   85/     45D : BC                  					PHI  RC
+(2)   86/     45E : FE                  					SHL
+(2)   87/     45F : 73                  					STXD
+(2)   88/     460 : 60                  					IRX					
+(2)   89/     461 : 9C                  					GHI  RC
+(2)   90/     462 : F4                  					ADD
+(2)   91/     463 : 73                  					STXD
+(2)   92/     464 : 60                  					IRX
+(2)   93/     465 : CB 04 6C            					LBNF DC_SkipHighByte
+(2)   94/     468 : 9D                  					GHI  RD
+(2)   95/     469 : FC 01               					ADI	 01H
+(2)   96/     46B : BD                  					PHI  RD
+(2)   97/     46C :                     					
+(2)   98/     46C : 8D                  DC_SkipHighByte:	GLO  RD							; add to the address in RD
+ AS V1.42 Beta [Bld 83] - source file Test.asm(Text1861.asm) - page 18 - 6/3/2020 15:51:22
+
+
+(2)   99/     46D : F4                  					ADD	
+(2)  100/     46E : AD                  					PLO  RD
+(2)  101/     46F : 3B 75               					BNF  DC_SkipHighByte2
+(2)  102/     471 : 9D                  					GHI  RD
+(2)  103/     472 : FC 01               					ADI  01H
+(2)  104/     474 : BD                  					PHI  RD
+(2)  105/     475 :                     
+(2)  106/     475 : 0D                  DC_SkipHighByte2:	LDN  RD							; get the width of the first character pattern
+(2)  107/     476 : F6                  					SHR
+(2)  108/     477 : F6                  					SHR
+(2)  109/     478 : F6                  					SHR
+(2)  110/     479 : F6                  					SHR
+(2)  111/     47A : 73                  					STXD
+(2)  112/     47B : 60                  					IRX
+(2)  113/     47C :                     
+(2)  114/     47C : 8C                  					GLO  RC							; do we need the first or the second pattern?
+(2)  115/     47D : FA 01               					ANI  01H
+(2)  116/     47F : BC                  					PHI  RC
+(2)  117/     480 : CA 04 96            					LBNZ  DC_PrepareSecond
+(2)  118/     483 :                     					
+(2)  119/     483 : F0                  					LDX								; prepare the mask					
+(2)  120/     484 : AB                  					PLO  RB	
+(2)  121/     485 : F8 00               					LDI  00H
+(2)  122/     487 : BB                  					PHI  RB
+(2)  123/     488 : 9B                  DC_MaskLoop:		GHI  RB
+(2)  124/     489 : F6                  					SHR
+(2)  125/     48A : F9 80               					ORI  80H
+(2)  126/     48C : BB                  					PHI  RB
+(2)  127/     48D : 2B                  					DEC  RB
+(2)  128/     48E : 8B                  					GLO  RB
+(2)  129/     48F : CA 04 88            					LBNZ  DC_MaskLoop
+(2)  130/     492 :                     
+(2)  131/     492 : F0                  					LDX
+(2)  132/     493 : 73                  					STXD							; keep the width of the first pattern on the stack
+(2)  133/     494 : 30 9C               					BR   DC_CopyPattern
+(2)  134/     496 :                     
+(2)  135/     496 : F0                  DC_PrepareSecond:	LDX								; use the width of the first pattern for shifting
+(2)  136/     497 : BB                  					PHI  RB
+(2)  137/     498 :                     
+(2)  138/     498 : 0D                  					LDN  RD							; keep the width of the second character pattern on the stack
+(2)  139/     499 : FA 07               					ANI  07H
+(2)  140/     49B : 73                  					STXD
+(2)  141/     49C :                     
+(2)  142/     49C : 1D                  DC_CopyPattern:		INC  RD
+(2)  143/     49D : F8 05               					LDI  05H						; prepare a loop over the five bytes of the pattern
+(2)  144/     49F : AC                  					PLO  RC
+(2)  145/     4A0 :                     					
+(2)  146/     4A0 : 0D                  DC_ByteLoop:		LDN  RD							; get a byte from the font
+(2)  147/     4A1 : 73                  					STXD
+(2)  148/     4A2 : 60                  					IRX
+(2)  149/     4A3 : 1D                  					INC  RD
+(2)  150/     4A4 :                     					
+(2)  151/     4A4 : 9C                  					GHI  RC
+(2)  152/     4A5 : 3A AD               					BNZ  DC_ByteShift
+(2)  153/     4A7 :                     
+(2)  154/     4A7 : 9B                  					GHI  RB							; mask out the first pattern
+(2)  155/     4A8 : F2                  					AND
+(2)  156/     4A9 : 73                  					STXD
+(2)  157/     4AA : 60                  					IRX
+(2)  158/     4AB : 30 B7               					BR   DC_ByteWrite
+ AS V1.42 Beta [Bld 83] - source file Test.asm(Text1861.asm) - page 19 - 6/3/2020 15:51:22
+
+
+(2)  159/     4AD :                     
+(2)  160/     4AD : 9B                  DC_ByteShift:		GHI  RB							; shift the second pattern
+(2)  161/     4AE : AB                  					PLO  RB
+(2)  162/     4AF : F0                  DC_ShiftLoop:		LDX
+(2)  163/     4B0 : FE                  					SHL
+(2)  164/     4B1 : 73                  					STXD
+(2)  165/     4B2 : 60                  					IRX
+(2)  166/     4B3 : 2B                  					DEC  RB
+(2)  167/     4B4 : 8B                  					GLO  RB
+(2)  168/     4B5 : 3A AF               					BNZ  DC_ShiftLoop
+(2)  169/     4B7 :                     
+(2)  170/     4B7 : F0                  DC_ByteWrite:		LDX								; write the byte
+(2)  171/     4B8 : 5F                  					STR  RF
+(2)  172/     4B9 : 1F                  					INC  RF
+(2)  173/     4BA :                     
+(2)  174/     4BA : 2C                  					DEC  RC							; continue until all bytes of the pattern are done
+(2)  175/     4BB : 8C                  					GLO  RC
+(2)  176/     4BC : 3A A0               					BNZ  DC_ByteLoop
+(2)  177/     4BE :                     
+(2)  178/     4BE : F8 CB               					LDI  lo(CharacterPattern)		; restore RF to the beginning of the pattern
+(2)  179/     4C0 : AF                  					PLO  RF
+(2)  180/     4C1 : F8 05               					LDI  05H						; set the length of the pattern
+(2)  181/     4C3 : AD                  					PLO  RD
+(2)  182/     4C4 : D4                  					SEP  R4							; call sprite routine to draw  
+(2)  183/     4C5 : 03 4F               					dw   DrawSprite
+(2)  184/     4C7 :                     
+(2)  185/     4C7 : 60                  					IRX								; clean up and exit
+(2)  186/     4C8 : F0                  					LDX
+(2)  187/     4C9 : AF                  					PLO  RF
+(2)  188/     4CA : D5                  					SEP  R5
+(2)  189/     4CB :                     
+(2)  190/     4CB :                     ;------------------------------------------------------------------------------------------
+(2)  191/     4CB :                     
+(2)  192/     4CB :                     
+(2)  193/     4CB :                     ; =========================================================================================
+(2)  194/     4CB :                     ; Buffer for unpacked characters
+(2)  195/     4CB :                     ; =========================================================================================
+(2)  196/     4CB :                     
+(2)  197/     4CB :                     CharacterPattern:	db 5 dup (?)
+(2)  198/     4D0 :                     
+(2)  199/     4D0 :                     ;------------------------------------------------------------------------------------------
+(2)  200/     4D0 :                     
+(2)  201/     4D0 :                     
+(2)  202/     4D0 :                     ; =========================================================================================
+(2)  203/     4D0 :                     ; Font definition
+(2)  204/     4D0 :                     ;
+(2)  205/     4D0 :                     ; The font has 64 or 96 printable characters, selected by setting Use96Char to "TRUE" or
+(2)  206/     4D0 :                     ; "FALSE". The font requires 192 bytes memory if 64 characters are used. Full 96 characters
+(2)  207/     4D0 :                     ; require 96 additional bytes, a total of 288 bytes.
+(2)  208/     4D0 :                     ;
+(2)  209/     4D0 :                     ; The characters are encoded in standard ASCII, beginning with 20H and anding at 5FH for
+(2)  210/     4D0 :                     ; 64 characters or 7FH for 96 characters. Each character has a height of 5 pixels and a
+(2)  211/     4D0 :                     ; variable width of 1 - 5 pixels. 
+(2)  212/     4D0 :                     ;
+(2)  213/     4D0 :                     ; In order to save memory, the patterns of two characters have been combined into one. Without
+(2)  214/     4D0 :                     ; this, the complete 96 character font would have required 480 bytes. The 'left' character
+(2)  215/     4D0 :                     ; stands for the lower even ASCII code, the 'right' one for the following
+(2)  216/     4D0 :                     ; uneven ASCII code. The DrawCharacter subroutine will either mask the left character or
+(2)  217/     4D0 :                     ; shift the right one over to the position of the left one when a character is drawn.
+(2)  218/     4D0 :                     ;
+ AS V1.42 Beta [Bld 83] - source file Test.asm(Text1861.asm) - page 20 - 6/3/2020 15:51:22
+
+
+(2)  219/     4D0 :                     ; Each line defines two characters of variable width, together no more than 8 pixels. The
+(2)  220/     4D0 :                     ; first byte contains the width of each character. The upper four bits hold the width of
+(2)  221/     4D0 :                     ; the left character in the pattern, the lower four bits hold the width of the right character.
+(2)  222/     4D0 :                     ;
+(2)  223/     4D0 :                     ; The following five bytes contain the bit patterns of the characters. Beginning at the left
+(2)  224/     4D0 :                     ; (most significant) bit, the pattern of the left character (up to its specified width) is 
+(2)  225/     4D0 :                     ; immediately followed by the bits of the right character. Any remaining bits to the right 
+(2)  226/     4D0 :                     ; (if both characters together are less than 8 pixels wide) must be set to 0. 
+(2)  227/     4D0 :                     ; =========================================================================================
+(2)  228/     4D0 :                     
+(2)  229/     4D0 : 11 40 40 40 00 40   Font:				db  0011H, 0040H, 0040H, 0040H, 0000H, 0040H		; space and !
+(2)  230/     4D6 : 35 AA BF 0A 1F 0A   					db  0035H, 00AAH, 00BFH, 000AH, 001FH, 000AH		; " and #
+(2)  231/     4DC : 33 74 C4 48 70 D4   					db  0033H, 0074H, 00C4H, 0048H, 0070H, 00D4H		; $ and %
+(2)  232/     4E2 : 41 48 A8 40 A0 D0   					db  0041H, 0048H, 00A8H, 0040H, 00A0H, 00D0H		; & and '
+(2)  233/     4E8 : 22 60 90 90 90 60   					db  0022H, 0060H, 0090H, 0090H, 0090H, 0060H		; ( and )
+(2)  234/     4EE : 33 00 A8 5C A8 00   					db  0033H, 0000H, 00A8H, 005CH, 00A8H, 0000H		; * and +
+(2)  235/     4F4 : 22 00 00 30 40 80   					db  0022H, 0000H, 0000H, 0030H, 0040H, 0080H		; , and -
+(2)  236/     4FA : 13 10 10 20 40 C0   					db  0013H, 0010H, 0010H, 0020H, 0040H, 00C0H		; . and /
+(2)  237/     500 : 33 48 B8 A8 A8 5C   					db  0033H, 0048H, 00B8H, 00A8H, 00A8H, 005CH		; 0 and 1
+(2)  238/     506 : 33 D8 24 48 84 F8   					db  0033H, 00D8H, 0024H, 0048H, 0084H, 00F8H		; 2 and 3
+(2)  239/     50C : 33 3C B0 F8 24 38   					db  0033H, 003CH, 00B0H, 00F8H, 0024H, 0038H		; 4 and 5
+(2)  240/     512 : 33 5C 84 C4 A8 48   					db  0033H, 005CH, 0084H, 00C4H, 00A8H, 0048H		; 6 and 7		
+(2)  241/     518 : 33 48 B4 4C A4 48   					db  0033H, 0048H, 00B4H, 004CH, 00A4H, 0048H		; 8 and 9
+(2)  242/     51E : 12 00 20 80 20 C0   					db  0012H, 0000H, 0020H, 0080H, 0020H, 00C0H		; : and ;		
+(2)  243/     524 : 32 20 58 80 58 20   					db  0032H, 0020H, 0058H, 0080H, 0058H, 0020H		; < and =
+(2)  244/     52A : 33 88 54 24 48 88   					db  0033H, 0088H, 0054H, 0024H, 0048H, 0088H		; > and ?
+(2)  245/     530 : 33 48 F4 9C B4 54   					db  0033H, 0048H, 00F4H, 009CH, 00B4H, 0054H		; @ and A
+(2)  246/     536 : 33 CC B0 D0 B0 CC   					db  0033H, 00CCH, 00B0H, 00D0H, 00B0H, 00CCH		; B and C
+(2)  247/     53C : 33 DC B0 B8 B0 DC   					db  0033H, 00DCH, 00B0H, 00B8H, 00B0H, 00DCH		; D and E
+(2)  248/     542 : 33 EC 90 D0 94 8C   					db  0033H, 00ECH, 0090H, 00D0H, 0094H, 008CH		; F and G
+(2)  249/     548 : 33 BC A8 E8 A8 BC   					db  0033H, 00BCH, 00A8H, 00E8H, 00A8H, 00BCH		; H and I
+(2)  250/     54E : 33 34 34 38 B4 54   					db  0033H, 0034H, 0034H, 0038H, 00B4H, 0054H		; J and K
+(2)  251/     554 : 35 91 9B 95 91 F1   					db  0035H, 0091H, 009BH, 0095H, 0091H, 00F1H		; L and M
+(2)  252/     55A : 43 9E DA BA 9A 9E   					db  0043H, 009EH, 00DAH, 00BAH, 009AH, 009EH		; N and O
+(2)  253/     560 : 34 DE B2 D2 96 9E   					db  0034H, 00DEH, 00B2H, 00D2H, 0096H, 009EH		; P and Q
+(2)  254/     566 : 33 CC B0 C8 A4 B8   					db  0033H, 00CCH, 00B0H, 00C8H, 00A4H, 00B8H		; R and S
+(2)  255/     56C : 33 F4 54 54 54 5C   					db  0033H, 00F4H, 0054H, 0054H, 0054H, 005CH		; T and U
+(2)  256/     572 : 35 B1 B1 B1 B5 4A   					db  0035H, 00B1H, 00B1H, 00B1H, 00B5H, 004AH		; V and W
+(2)  257/     578 : 33 B4 B4 48 A8 A8   					db  0033H, 00B4H, 00B4H, 0048H, 00A8H, 00A8H		; X and Y
+(2)  258/     57E : 32 F8 30 50 90 F8   					db  0032H, 00F8H, 0030H, 0050H, 0090H, 00F8H		; Z and [
+(2)  259/     584 : 32 98 88 48 28 38   					db  0032H, 0098H, 0088H, 0048H, 0028H, 0038H		; \ and ]
+(2)  260/     58A : 33 40 A0 00 00 1C   					db  0033H, 0040H, 00A0H, 0000H, 0000H, 001CH		; ^ and _
+(2)  261/     590 :                     
+(2)  262/     590 : =>TRUE              					IF Use96Char == "TRUE"
+(2)  263/     590 :                     
+(2)  264/     590 : 23 40 98 28 28 18   					db  0023H, 0040H, 0098H, 0028H, 0028H, 0018H		; ' and a
+(2)  265/     596 : 33 80 CC B0 B0 CC   					db  0033H, 0080H, 00CCH, 00B0H, 00B0H, 00CCH		; b and c
+(2)  266/     59C : 33 20 6C B4 B8 6C   					db  0033H, 0020H, 006CH, 00B4H, 00B8H, 006CH		; d and e
+(2)  267/     5A2 : 23 58 A8 F0 88 B0   					db  0023H, 0058H, 00A8H, 00F0H, 0088H, 00B0H		; f and g
+(2)  268/     5A8 : 31 90 80 D0 B0 B0   					db  0031H, 0090H, 0080H, 00D0H, 00B0H, 00B0H		; h and i
+(2)  269/     5AE : 23 60 28 70 68 A8   					db  0023H, 0060H, 0028H, 0070H, 0068H, 00A8H		; j and k
+(2)  270/     5B4 : 25 80 94 AA AA 6A   					db  0025H, 0080H, 0094H, 00AAH, 00AAH, 006AH		; l and m
+(2)  271/     5BA : 33 00 C8 B4 B4 A8   					db  0033H, 0000H, 00C8H, 00B4H, 00B4H, 00A8H		; n and o
+(2)  272/     5C0 : 33 00 CC B4 CC 84   					db  0033H, 0000H, 00CCH, 00B4H, 00CCH, 0084H		; p and q
+(2)  273/     5C6 : 23 00 58 B0 88 B0   					db  0023H, 0000H, 0058H, 00B0H, 0088H, 00B0H		; r and s
+(2)  274/     5CC : 23 80 E8 A8 A8 58   					db  0023H, 0080H, 00E8H, 00A8H, 00A8H, 0058H		; t and u
+(2)  275/     5D2 : 35 00 B1 B5 B5 4A   					db  0035H, 0000H, 00B1H, 00B5H, 00B5H, 004AH		; v and w
+(2)  276/     5D8 : 33 00 B4 4C 44 A8   					db  0033H, 0000H, 00B4H, 004CH, 0044H, 00A8H		; x and y
+(2)  277/     5DE : 33 0C E8 30 48 EC   					db  0033H, 000CH, 00E8H, 0030H, 0048H, 00ECH		; z and {
+(2)  278/     5E4 : 13 E0 A0 90 A0 E0   					db  0013H, 00E0H, 00A0H, 0090H, 00A0H, 00E0H		; | and }
+ AS V1.42 Beta [Bld 83] - source file Test.asm(Text1861.asm) - page 21 - 6/3/2020 15:51:22
+
+
+(2)  279/     5EA : 44 05 5A A5 0A 05   					db  0044H, 0005H, 005AH, 00A5H, 000AH, 0005H		; ~ and DEL
+(2)  280/     5F0 :                     
+(2)  281/     5F0 : [262]               					ENDIF
+(2)  282/     5F0 :                     
+(2)  283/     5F0 :                     ;------------------------------------------------------------------------------------------
+(2)  284/     5F0 :                     
+(2)  285/     5F0 : [1]                 					ENDIF
+(1)  120/     5F0 :                     					INCLUDE "IO.asm"
+(2)    1/     5F0 : =>TRUE              					IF UseIO == "TRUE"
+(2)    2/     5F0 :                     
+(2)    3/     5F0 : =>TRUE              					IF System == "Elf"
+(2)    4/     5F0 :                     
+(2)    5/     5F0 : =4H                 HexpadPort			EQU  4
+(2)    6/     5F0 : =4H                 HexDisplayPort		EQU  4
+(2)    7/     5F0 : =7H                 ASCIIPort			EQU  7
+(2)    8/     5F0 :                     
+(2)    9/     5F0 : [3]                 					ENDIF
+(2)   10/     5F0 :                     
+(2)   11/     5F0 :                     ; =========================================================================================
+(2)   12/     5F0 :                     ; Waits until a key is pressed on the ASCII keyboard and returns its value
+(2)   13/     5F0 :                     ;
+(2)   14/     5F0 :                     ; Returns:
+(2)   15/     5F0 :                     ; RF.0		Byte read from the ASCII keyboard
+(2)   16/     5F0 :                     ; 
+(2)   17/     5F0 :                     ; =========================================================================================
+(2)   18/     5F0 :                     
+(2)   19/     5F0 : =>TRUE              					IF System == "Elf"
+(2)   20/     5F0 : 36 F0               InputASCII:			B3	 InputASCII
+(2)   21/     5F2 : 3E F2               IA_Release:			BN3  IA_Release
+(2)   22/     5F4 : [19]                					ENDIF
+(2)   23/     5F4 :                     
+(2)   24/     5F4 : 6F                  					INP  ASCIIPort
+(2)   25/     5F5 : AF                  					PLO  RF
+(2)   26/     5F6 : D5                  					SEP  R5
+(2)   27/     5F7 :                     
+(2)   28/     5F7 :                     ;------------------------------------------------------------------------------------------
+(2)   29/     5F7 :                     
+(2)   30/     5F7 :                     
+(2)   31/     5F7 :                     ; =========================================================================================
+(2)   32/     5F7 :                     ; Waits until the input key is pressed returns the value entered into the hexpad
+(2)   33/     5F7 :                     ;
+(2)   34/     5F7 :                     ; Returns:
+(2)   35/     5F7 :                     ; RF.0		Byte read from the ASCII keyboard
+(2)   36/     5F7 :                     ; RF.1		8 bit seed for random number generation.
+(2)   37/     5F7 :                     ; 
+(2)   38/     5F7 :                     ; =========================================================================================
+(2)   39/     5F7 :                     
+(2)   40/     5F7 : =>TRUE              					IF System == "Elf"
+(2)   41/     5F7 : 9F                  InputHexpad:		GHI  RF
+(2)   42/     5F8 : FC 01               					ADI  0001H
+(2)   43/     5FA : BF                  					PHI  RF
+(2)   44/     5FB : 3F F7               					BN4  InputHexpad
+(2)   45/     5FD : 37 FD               IH_Release:			B4   IH_Release
+(2)   46/     5FF : [40]                					ENDIF
+(2)   47/     5FF :                     
+(2)   48/     5FF : 6C                  					INP  HexpadPort
+(2)   49/     600 : AF                  					PLO  RF
+(2)   50/     601 : D5                  					SEP  R5
+(2)   51/     602 :                     
+(2)   52/     602 :                     ;------------------------------------------------------------------------------------------
+ AS V1.42 Beta [Bld 83] - source file Test.asm(IO.asm) - page 22 - 6/3/2020 15:51:22
+
+
+(2)   53/     602 :                     
+(2)   54/     602 :                     
+(2)   55/     602 :                     ; =========================================================================================
+(2)   56/     602 :                     ; Outputs a value on the hex display
+(2)   57/     602 :                     ;
+(2)   58/     602 :                     ; Parameters:
+(2)   59/     602 :                     ; RF.0		Value to be shown on the hex display
+(2)   60/     602 :                     ; 
+(2)   61/     602 :                     ; =========================================================================================
+(2)   62/     602 :                     
+(2)   63/     602 : =>TRUE              					IF System == "Elf"
+(2)   64/     602 :                     
+(2)   65/     602 : 8F                  OutputHex:			GLO  RF
+(2)   66/     603 : 52                  					STR  R2
+(2)   67/     604 : 64                  					OUT  HexDisplayPort
+(2)   68/     605 : 22                  					DEC  R2
+(2)   69/     606 : D5                  					SEP  R5
+(2)   70/     607 :                     
+(2)   71/     607 : [63]                					ENDIF
+(2)   72/     607 :                     
+(2)   73/     607 :                     ;------------------------------------------------------------------------------------------
+(2)   74/     607 :                     
+(2)   75/     607 : [1]                 					ENDIF
+(1)  121/     607 :                     
+(1)  122/     607 :                     ;------------------------------------------------------------------------------------------
+(1)  123/     607 :                     
+      21/     607 :                     
+      22/     607 :                     
+      23/     607 :                     ; =========================================================================================
+      24/     607 :                     ; Main
+      25/     607 :                     ; =========================================================================================
+      26/     607 :                     
+      27/     607 : E2                  Start:				SEX  R2								; start CDP1861
+      28/     608 : F8 00               					LDI  00H							; clear screen
+      29/     60A : BF                  					PHI  RF
+      30/     60B : D4                  					SEP  R4
+      31/     60C : 03 3B               					dw   FillScreen
+      32/     60E : D4                  					SEP  R4
+      33/     60F : 03 A0               					dw   CopyBackBuffer
+      34/     611 : D4                  					SEP  R4
+      35/     612 : 03 A0               					dw   CopyBackBuffer
+      36/     614 : 69                  					INP  1
+      37/     615 :                     
+      38/     615 : D4                  MainLoop:			SEP  R4								; let's demonstrate the text functions
+      39/     616 : 06 1D               					dw   Text
+      40/     618 : D4                  					SEP  R4								; let's draw some sprites
+      41/     619 : 06 A2               					dw   BigSprites
+      42/     61B : 30 15               					BR   MainLoop
+      43/     61D :                     
+      44/     61D :                     ;------------------------------------------------------------------------------------------
+      45/     61D :                     
+      46/     61D :                     
+      47/     61D :                     ; =========================================================================================
+      48/     61D :                     ; Let's show off the 96 character font: 
+      49/     61D :                     ; =========================================================================================
+      50/     61D :                     
+      51/     61D : F8 00               Text:				LDI  00H							; clear screen
+      52/     61F : BF                  					PHI  RF
+      53/     620 : D4                  					SEP  R4
+      54/     621 : 03 3B               					dw   FillScreen
+ AS V1.42 Beta [Bld 83] - source file Test.asm - page 23 - 6/3/2020 15:51:22
+
+
+      55/     623 :                     
+      56/     623 : F8 07               					LDI  hi(FontTitle)
+      57/     625 : BF                  					PHI  RF
+      58/     626 : F8 5D               					LDI  lo(FontTitle)
+      59/     628 : AF                  					PLO  RF
+      60/     629 : F8 08               					LDI  08H
+      61/     62B : AE                  					PLO  RE
+      62/     62C : F8 00               					LDI  00H
+      63/     62E : BE                  					PHI  RE
+      64/     62F : D4                  					SEP  R4
+      65/     630 : 04 27               					dw   DrawString
+      66/     632 :                     
+      67/     632 : F8 07               					LDI  hi(Font1)
+      68/     634 : BF                  					PHI  RF
+      69/     635 : F8 6B               					LDI  lo(Font1)
+      70/     637 : AF                  					PLO  RF
+      71/     638 : F8 00               					LDI  00H
+      72/     63A : AE                  					PLO  RE
+      73/     63B : F8 12               					LDI  12H
+      74/     63D : BE                  					PHI  RE
+      75/     63E : D4                  					SEP  R4
+      76/     63F : 04 27               					dw   DrawString
+      77/     641 :                     
+      78/     641 : F8 07               					LDI  hi(Font2)
+      79/     643 : BF                  					PHI  RF
+      80/     644 : F8 7C               					LDI  lo(Font2)
+      81/     646 : AF                  					PLO  RF
+      82/     647 : F8 00               					LDI  00H
+      83/     649 : AE                  					PLO  RE
+      84/     64A : F8 18               					LDI  18H
+      85/     64C : BE                  					PHI  RE
+      86/     64D : D4                  					SEP  R4
+      87/     64E : 04 27               					dw   DrawString
+      88/     650 :                     
+      89/     650 : F8 07               					LDI  hi(Font3)
+      90/     652 : BF                  					PHI  RF
+      91/     653 : F8 8D               					LDI  lo(Font3)
+      92/     655 : AF                  					PLO  RF
+      93/     656 : F8 00               					LDI  00H
+      94/     658 : AE                  					PLO  RE
+      95/     659 : F8 1E               					LDI  1EH
+      96/     65B : BE                  					PHI  RE
+      97/     65C : D4                  					SEP  R4
+      98/     65D : 04 27               					dw   DrawString
+      99/     65F :                     
+     100/     65F : F8 07               					LDI  hi(Font4)
+     101/     661 : BF                  					PHI  RF
+     102/     662 : F8 9D               					LDI  lo(Font4)
+     103/     664 : AF                  					PLO  RF
+     104/     665 : F8 00               					LDI  00H
+     105/     667 : AE                  					PLO  RE
+     106/     668 : F8 24               					LDI  24H
+     107/     66A : BE                  					PHI  RE
+     108/     66B : D4                  					SEP  R4
+     109/     66C : 04 27               					dw   DrawString
+     110/     66E :                     
+     111/     66E : F8 07               					LDI  hi(Font5)
+     112/     670 : BF                  					PHI  RF
+     113/     671 : F8 AD               					LDI  lo(Font5)
+     114/     673 : AF                  					PLO  RF
+ AS V1.42 Beta [Bld 83] - source file Test.asm - page 24 - 6/3/2020 15:51:22
+
+
+     115/     674 : F8 00               					LDI  00H
+     116/     676 : AE                  					PLO  RE
+     117/     677 : F8 2A               					LDI  2AH
+     118/     679 : BE                  					PHI  RE
+     119/     67A : D4                  					SEP  R4
+     120/     67B : 04 27               					dw   DrawString
+     121/     67D :                     
+     122/     67D : F8 07               					LDI  hi(Font6)
+     123/     67F : BF                  					PHI  RF
+     124/     680 : F8 BF               					LDI  lo(Font6)
+     125/     682 : AF                  					PLO  RF
+     126/     683 : F8 00               					LDI  00H
+     127/     685 : AE                  					PLO  RE
+     128/     686 : F8 30               					LDI  30H
+     129/     688 : BE                  					PHI  RE
+     130/     689 : D4                  					SEP  R4
+     131/     68A : 04 27               					dw   DrawString
+     132/     68C :                     
+     133/     68C : F8 07               					LDI  hi(PressI)
+     134/     68E : BF                  					PHI  RF
+     135/     68F : F8 DD               					LDI  lo(PressI)
+     136/     691 : AF                  					PLO  RF
+     137/     692 : F8 0F               					LDI  0FH
+     138/     694 : AE                  					PLO  RE
+     139/     695 : F8 3A               					LDI  3AH
+     140/     697 : BE                  					PHI  RE
+     141/     698 : D4                  					SEP  R4
+     142/     699 : 04 27               					dw   DrawString
+     143/     69B :                     
+     144/     69B : D4                  					SEP  R4
+     145/     69C : 03 A0               					dw   CopyBackBuffer
+     146/     69E :                     
+     147/     69E : D4                  					SEP  R4								; wait for input from the hex keyboard
+     148/     69F : 05 F7               					dw   InputHexpad
+     149/     6A1 : D5                  					SEP  R5
+     150/     6A2 :                     
+     151/     6A2 :                     ;------------------------------------------------------------------------------------------
+     152/     6A2 :                     
+     153/     6A2 :                     
+     154/     6A2 :                     ; =========================================================================================
+     155/     6A2 :                     ; Let's draw some big sprites
+     156/     6A2 :                     ; =========================================================================================
+     157/     6A2 :                     
+     158/     6A2 : F8 00               BigSprites:			LDI  00H							; clear screen
+     159/     6A4 : BF                  					PHI  RF
+     160/     6A5 : D4                  					SEP  R4
+     161/     6A6 : 03 3B               					dw   FillScreen
+     162/     6A8 :                     
+     163/     6A8 : F8 08               					LDI  0008H							; the Klingon ship is actually made up of four sprites
+     164/     6AA : AE                  					PLO  RE								; drawn next to each other
+     165/     6AB : F8 07               					LDI  0007H
+     166/     6AD : BE                  					PHI  RE
+     167/     6AE : F8 07               					LDI  hi(Klingon_0)
+     168/     6B0 : BF                  					PHI  RF
+     169/     6B1 : F8 E7               					LDI  lo(Klingon_0)
+     170/     6B3 : AF                  					PLO  RF
+     171/     6B4 : F8 0F               					LDI  000FH
+     172/     6B6 : AD                  					PLO	 RD
+     173/     6B7 : D4                  					SEP  R4
+     174/     6B8 : 03 4F               					dw   DrawSprite
+ AS V1.42 Beta [Bld 83] - source file Test.asm - page 25 - 6/3/2020 15:51:22
+
+
+     175/     6BA :                     
+     176/     6BA : F8 10               					LDI  0010H
+     177/     6BC : AE                  					PLO  RE
+     178/     6BD : F8 00               					LDI  0000H
+     179/     6BF : BE                  					PHI  RE
+     180/     6C0 : F8 07               					LDI  hi(Klingon_1)
+     181/     6C2 : BF                  					PHI  RF
+     182/     6C3 : F8 F6               					LDI  lo(Klingon_1)
+     183/     6C5 : AF                  					PLO  RF
+     184/     6C6 : F8 0E               					LDI  000EH
+     185/     6C8 : AD                  					PLO	 RD
+     186/     6C9 : D4                  					SEP  R4
+     187/     6CA : 03 4F               					dw   DrawSprite
+     188/     6CC :                     
+     189/     6CC : F8 18               					LDI  0018H
+     190/     6CE : AE                  					PLO  RE
+     191/     6CF : F8 03               					LDI  0003H
+     192/     6D1 : BE                  					PHI  RE
+     193/     6D2 : F8 08               					LDI  hi(Klingon_2)
+     194/     6D4 : BF                  					PHI  RF
+     195/     6D5 : F8 04               					LDI  lo(Klingon_2)
+     196/     6D7 : AF                  					PLO  RF
+     197/     6D8 : F8 0B               					LDI  000BH
+     198/     6DA : AD                  					PLO	 RD
+     199/     6DB : D4                  					SEP  R4
+     200/     6DC : 03 4F               					dw   DrawSprite
+     201/     6DE :                     
+     202/     6DE : F8 20               					LDI  0020H
+     203/     6E0 : AE                  					PLO  RE
+     204/     6E1 : F8 0C               					LDI  000CH
+     205/     6E3 : BE                  					PHI  RE
+     206/     6E4 : F8 08               					LDI  hi(Klingon_3)
+     207/     6E6 : BF                  					PHI  RF
+     208/     6E7 : F8 0F               					LDI  lo(Klingon_3)
+     209/     6E9 : AF                  					PLO  RF
+     210/     6EA : F8 0A               					LDI  000AH
+     211/     6EC : AD                  					PLO	 RD
+     212/     6ED : D4                  					SEP  R4
+     213/     6EE : 03 4F               					dw   DrawSprite
+     214/     6F0 :                     
+     215/     6F0 : F8 20               					LDI  0020H							; same with the Romulans
+     216/     6F2 : AE                  					PLO  RE
+     217/     6F3 : F8 20               					LDI  0020H
+     218/     6F5 : BE                  					PHI  RE
+     219/     6F6 : F8 08               					LDI  hi(Romulan_0)
+     220/     6F8 : BF                  					PHI  RF
+     221/     6F9 : F8 19               					LDI  lo(Romulan_0)
+     222/     6FB : AF                  					PLO  RF
+     223/     6FC : F8 0B               					LDI  000BH
+     224/     6FE : AD                  					PLO	 RD
+     225/     6FF : D4                  					SEP  R4
+     226/     700 : 03 4F               					dw   DrawSprite
+     227/     702 :                     
+     228/     702 : F8 28               					LDI  0028H
+     229/     704 : AE                  					PLO  RE
+     230/     705 : F8 25               					LDI  0025H
+     231/     707 : BE                  					PHI  RE
+     232/     708 : F8 08               					LDI  hi(Romulan_1)
+     233/     70A : BF                  					PHI  RF
+     234/     70B : F8 24               					LDI  lo(Romulan_1)
+ AS V1.42 Beta [Bld 83] - source file Test.asm - page 26 - 6/3/2020 15:51:22
+
+
+     235/     70D : AF                  					PLO  RF
+     236/     70E : F8 08               					LDI  0008H
+     237/     710 : AD                  					PLO	 RD
+     238/     711 : D4                  					SEP  R4
+     239/     712 : 03 4F               					dw   DrawSprite
+     240/     714 :                     
+     241/     714 : F8 30               					LDI  0030H
+     242/     716 : AE                  					PLO  RE
+     243/     717 : F8 26               					LDI  0026H
+     244/     719 : BE                  					PHI  RE
+     245/     71A : F8 08               					LDI  hi(Romulan_2)
+     246/     71C : BF                  					PHI  RF
+     247/     71D : F8 2C               					LDI  lo(Romulan_2)
+     248/     71F : AF                  					PLO  RF
+     249/     720 : F8 06               					LDI  0006H
+     250/     722 : AD                  					PLO	 RD
+     251/     723 : D4                  					SEP  R4
+     252/     724 : 03 4F               					dw   DrawSprite
+     253/     726 :                     
+     254/     726 : F8 38               					LDI  0038H
+     255/     728 : AE                  					PLO  RE
+     256/     729 : F8 20               					LDI  0020H
+     257/     72B : BE                  					PHI  RE
+     258/     72C : F8 08               					LDI  hi(Romulan_3)
+     259/     72E : BF                  					PHI  RF
+     260/     72F : F8 32               					LDI  lo(Romulan_3)
+     261/     731 : AF                  					PLO  RF
+     262/     732 : F8 08               					LDI  0008H
+     263/     734 : AD                  					PLO	 RD
+     264/     735 : D4                  					SEP  R4
+     265/     736 : 03 4F               					dw   DrawSprite
+     266/     738 :                     
+     267/     738 : F8 07               					LDI  hi(Title)
+     268/     73A : BF                  					PHI  RF
+     269/     73B : F8 D0               					LDI  lo(Title)
+     270/     73D : AF                  					PLO  RF
+     271/     73E : F8 0D               					LDI  0DH
+     272/     740 : AE                  					PLO  RE
+     273/     741 : F8 32               					LDI  32H
+     274/     743 : BE                  					PHI  RE
+     275/     744 : D4                  					SEP  R4
+     276/     745 : 04 27               					dw   DrawString
+     277/     747 :                     
+     278/     747 : F8 07               					LDI  hi(PressI)
+     279/     749 : BF                  					PHI  RF
+     280/     74A : F8 DD               					LDI  lo(PressI)
+     281/     74C : AF                  					PLO  RF
+     282/     74D : F8 0F               					LDI  0FH
+     283/     74F : AE                  					PLO  RE
+     284/     750 : F8 38               					LDI  38H
+     285/     752 : BE                  					PHI  RE
+     286/     753 : D4                  					SEP  R4
+     287/     754 : 04 27               					dw   DrawString
+     288/     756 :                     
+     289/     756 : D4                  					SEP  R4
+     290/     757 : 03 A0               					dw   CopyBackBuffer
+     291/     759 :                     
+     292/     759 : D4                  					SEP  R4								; wait for input from the hex keyboard
+     293/     75A : 05 F7               					dw   InputHexpad
+     294/     75C : D5                  					SEP  R5
+ AS V1.42 Beta [Bld 83] - source file Test.asm - page 27 - 6/3/2020 15:51:22
+
+
+     295/     75D :                     
+     296/     75D :                     ;------------------------------------------------------------------------------------------
+     297/     75D :                     
+     298/     75D :                     
+     299/     75D :                     ; =========================================================================================
+     300/     75D :                     ; Strings
+     301/     75D :                     ; =========================================================================================
+     302/     75D :                     
+     303/     75D : 39 36 20 63 68 61   FontTitle:			db	"96 char. font\0"
+                    72 2E 20 66 6F 6E 
+                    74 00 
+     304/     76B : 20 21 22 23 24 25   Font1:				db  " !\"#$%&'()*+,-.\\\0"
+                    26 27 28 29 2A 2B 
+                    2C 2D 2E 5C 00 
+     305/     77C : 30 31 32 33 34 35   Font2:				db  "0123456789:;<=>?\0"
+                    36 37 38 39 3A 3B 
+                    3C 3D 3E 3F 00 
+     306/     78D : 40 41 42 43 44 45   Font3:				db  "@ABCDEFGHIJKLMN\0"
+                    46 47 48 49 4A 4B 
+                    4C 4D 4E 00 
+     307/     79D : 4F 50 51 52 53 54   Font4:				db  "OPQRSTUVWXYZ[/]\0"
+                    55 56 57 58 59 5A 
+                    5B 2F 5D 00 
+     308/     7AD : 5E 5F 60 61 62 63   Font5:				db  "^_`abcdefghijklmn\0"
+                    64 65 66 67 68 69 
+                    6A 6B 6C 6D 6E 00 
+     309/     7BF : 6F 70 71 72 73 74   Font6:				db  "opqrstuvwxyz{|}~\0"
+                    75 76 77 78 79 7A 
+                    7B 7C 7D 7E 00 
+     310/     7D0 :                     
+     311/     7D0 : 42 69 67 20 53 70   Title:				db "Big Sprites!\0"
+                    72 69 74 65 73 21 
+                    00 
+     312/     7DD :                     
+     313/     7DD : 28 50 72 65 73 73   PressI				db "(Press I)\0"
+                    20 49 29 00 
+     314/     7E7 :                     
+     315/     7E7 :                     ;------------------------------------------------------------------------------------------
+     316/     7E7 :                     
+     317/     7E7 :                     
+     318/     7E7 :                     ; =========================================================================================
+     319/     7E7 :                     ; Graphics
+     320/     7E7 :                     ; =========================================================================================
+     321/     7E7 :                     
+     322/     7E7 : 01 03 07 0F 0F 1F   Klingon_0			db 0001H, 0003H, 0007H, 000FH, 000FH, 001FH, 0038H, 0070H			; offset 7
+                    38 70 
+     323/     7EF : E0 C0 C0 C0 60 60   					db 00E0H, 00C0H, 00C0H, 00C0H, 0060H, 0060H, 0020H
+                    20 
+     324/     7F6 :                     
+     325/     7F6 : 06 06 0F 7F 7F 7F   Klingon_1			db 0006H, 0006H, 000FH, 007FH, 007FH, 007FH, 001FH, 00DFH			; offset 0
+                    1F DF 
+     326/     7FE : D9 C9 E6 F0 FF 1F   					db 00D9H, 00C9H, 00E6H, 00F0H, 00FFH, 001FH
+     327/     804 :                     
+     328/     804 : E0 E0 E0 80 B8 BC   Klingon_2			db 00E0H, 00E0H, 00E0H, 0080H, 00B8H, 00BCH, 003EH, 007FH			; offset 3
+                    3E 7F 
+     329/     80C : FF FF 81            					db 00FFH, 00FFH, 0081H
+     330/     80F :                     
+     331/     80F : 80 C0 E0 70 30 30   Klingon_3			db 0080H, 00C0H, 00E0H, 0070H, 0030H, 0030H, 0030H, 0030H			; offset 12
+                    30 30 
+     332/     817 : 60 40               					db 0060H, 0040H
+ AS V1.42 Beta [Bld 83] - source file Test.asm - page 28 - 6/3/2020 15:51:22
+
+
+     333/     819 :                     
+     334/     819 :                     ;------------------------------------------------------------------------------------------
+     335/     819 :                     
+     336/     819 : 60 F0 F0 F0 60 70   Romulan_0			db 0060H, 00F0H, 00F0H, 00F0H, 0060H, 0070H, 0038H, 001CH			; offset 0
+                    38 1C 
+     337/     821 : 0F 07 03            					db 000FH, 0007H, 0003H
+     338/     824 :                     
+     339/     824 : 06 0F 7F FF FF F9   Romulan_1			db 0006H, 000FH, 007FH, 00FFH, 00FFH, 00F9H, 0039H, 000FH			; offset 5
+                    39 0F 
+     340/     82C :                     
+     341/     82C : 01 E3 FF FE FC C0   Romulan_2			db 0001H, 00E3H, 00FFH, 00FEH, 00FCH, 00C0H							; offset 6
+     342/     832 :                     
+     343/     832 : 60 F0 F0 F0 60 E0   Romulan_3			db 0060H, 00F0H, 00F0H, 00F0H, 0060H, 00E0H, 00C0H, 0080H			; offset 0
+                    C0 80 
+     344/     83A :                     
+     345/     83A :                     ;------------------------------------------------------------------------------------------
+     346/     83A :                     
+     347/     83A :                     
+ AS V1.42 Beta [Bld 83] - source file Test.asm - page 29 - 6/3/2020 15:51:22
+
+
+  symbol table (* = unused):
+  ------------------------
+
+*ARCHITECTURE :  i386-unknown-win32 - |  ASCIIPORT :                      7 - |
+ BACKBUFFER :                   OFF - | *BIGENDIAN :                      0 - |
+ BIGSPRITES :                   6A2 C | *BITFUNCSINC :                    1 - |
+*BRANCHEXT :                      0 - |  BTHS_EXIT :                    3E7 C |
+ BTHS_SKIP :                    3E4 C |  BTN_DIGITLOOP :                3AF C |
+ BTN_SUBLOOP :                  3B2 C |  BTS_CONSTANTS :                3C8 C |
+*BTS_EXIT :                     3C4 C |  BTS_OVERFLOW :                 3BA C |
+ BTS_RESULT :                   3CC C | *BYTETOHEXSTRING :              3D0 C |
+*BYTETOSTRING :                 3A1 C | *CASESENSITIVE :                  0 - |
+*CBB_EXIT :                     3A0 C |  CHARACTERPATTERN :             4CB C |
+ CI_LOOP :                      32D C | *CONSTPI :        3.141592653589793 - |
+ COPYBACKBUFFER :               3A0 C | *COPYIMAGE :                    327 C |
+*DATE :                    6/3/2020 - |  DC_BYTELOOP :                  4A0 C |
+ DC_BYTESHIFT :                 4AD C |  DC_BYTEWRITE :                 4B7 C |
+ DC_COPYPATTERN :               49C C |  DC_MASKLOOP :                  488 C |
+ DC_PREPARESECOND :             496 C |  DC_SHIFTLOOP :                 4AF C |
+ DC_SKIPHIGHBYTE :              46C C |  DC_SKIPHIGHBYTE2 :             475 C |
+ DELAY :                         3C C |  DISPLAYBUFFER :                100 C |
+ DISPLAYINT :                   30A C |  DRAWCHARACTER :                44C C |
+ DRAWSPRITE :                   34F C |  DRAWSTRING :                   427 C |
+ DSP_BYTELOOP :                 36D C |  DSP_EXIT :                     39F C |
+ DSP_SHIFTEXIT :                38C C |  DSP_SHIFTLOOP :                380 C |
+ DSP_SKIPINCREMENT :            35F C |  DS_EXIT :                      44B C |
+*FALSE :                          0 - |  FILLSCREEN :                   33B C |
+ FONT :                         4D0 C |  FONT1 :                        76B C |
+ FONT2 :                        77C C |  FONT3 :                        78D C |
+ FONT4 :                        79D C |  FONT5 :                        7AD C |
+ FONT6 :                        7BF C |  FONTTITLE :                    75D C |
+ FS_LOOP :                      341 C | *FULLPMMU :                       1 - |
+*GETRANDOM :                    3F6 C | *GRA_BITONE :                   40C C |
+ GRA_BITZERO :                  416 C |  GRA_SHIFTLOOP :                405 C |
+ GRA_TESTLOOP :                 419 C | *HAS64 :                          1 - |
+*HASDSP :                         0 - | *HASFPU :                         0 - |
+*HASPMMU :                        0 - |  HEXDISPLAYPORT :                 4 - |
+ HEXPADPORT :                     4 - |  IA_RELEASE :                   5F2 C |
+ IH_RELEASE :                   5FD C | *INEXTMODE :                      0 - |
+*INIT :                           0 C | *INLWORDMODE :                    0 - |
+*INMAXMODE :                      0 - |  INPUTASCII :                   5F0 C |
+ INPUTHEXPAD :                  5F7 C | *INSRCMODE :                      0 - |
+*INSUPMODE :                      0 - |  INT_EXIT :                     308 C |
+ INT_LOOP :                     318 C |  INT_REST :                     31F C |
+ KLINGON_0 :                    7E7 C |  KLINGON_1 :                    7F6 C |
+ KLINGON_2 :                    804 C |  KLINGON_3 :                    80F C |
+*LISTON :                         1 - | *MACEXP :                         1 - |
+ MAINLOOP :                     615 C | *MOMCPU :                      1802 - |
+*MOMCPUNAME :                  1802 - | *NESTMAX :                      100 - |
+*OUTPUTHEX :                    602 C | *PACKING :                        0 - |
+*PADDING :                        1 - |  PRESSI :                       7DD C |
+ R0 :                             0 - |  R1 :                             1 - |
+ R2 :                             2 - |  R3 :                             3 - |
+ R4 :                             4 - |  R5 :                             5 - |
+ R6 :                             6 - | *R7 :                             7 - |
+*R8 :                             8 - | *R9 :                             9 - |
+*RA :                             A - |  RANDOMSIZE :                     8 - |
+ RANDOMSTATE :                  425 C |  RB :                             B - |
+ RC :                             C - |  RD :                             D - |
+ RE :                             E - | *RELAXED :                        0 - |
+ AS V1.42 Beta [Bld 83] - source file Test.asm - page 30 - 6/3/2020 15:51:22
+
+
+*RESERVED :                     300 C |  RESOLUTION :                 64x64 - |
+ RF :                             F - |  ROMULAN_0 :                    819 C |
+ ROMULAN_1 :                    824 C |  ROMULAN_2 :                    82C C |
+ ROMULAN_3 :                    832 C | *SETSEED :                      3ED C |
+ STACKTOP :                      FF C |  START :                        607 C |
+ STC_EXIT :                      1F C |  STDCALL :                       20 C |
+ STDRETURN :                     30 C |  STR_EXIT :                      2F C |
+ SYSTEM :                       Elf - |  TEXT :                         61D C |
+*TIME :                    15:51:22 - |  TITLE :                        7D0 C |
+*TRUE :                           1 - |  USE96CHAR :                   TRUE - |
+*USECONSOLE :                 FALSE - |  USECONVERSION :               TRUE - |
+ USEGRAPHICS :                 TRUE - |  USEIO :                       TRUE - |
+ USERANDOM :                   TRUE - |  USETEXT :                     TRUE - |
+*VERSION :                     142F - |
+
+    141 symbols
+     45 unused symbols
+
+ AS V1.42 Beta [Bld 83] - source file Test.asm - page 31 - 6/3/2020 15:51:22
+
+
+  defined functions:
+  ------------------
+
+ROTRN                                 | ROTLN                                
+SHRN                                  | SHLN                                 
+GETBIT                                | EVEN                                 
+ODD                                   | LOWORD                               
+HIWORD                                | LO                                   
+HI                                    | CUTOUT                               
+INVMASK                               | MASK                                 
+
+ AS V1.42 Beta [Bld 83] - source file Test.asm - page 32 - 6/3/2020 15:51:22
+
+
+  codepages:
+  ----------
+
+STANDARD (0 changed characters)
+
+
+0.04 seconds assembly time
+
+   1695 lines source file
+      2 passes
+      0 errors
+      0 warnings

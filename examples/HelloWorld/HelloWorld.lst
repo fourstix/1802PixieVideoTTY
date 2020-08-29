@@ -1,0 +1,2688 @@
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm - Page 1 - 8/28/2020 13:38:20
+
+
+       1/       0 :                     ; *******************************************************************************************
+       2/       0 :                     ; HelloWorld - Write a message to the display using PutChar function
+       3/       0 :                     ;
+       4/       0 :                     ; Copyright (c) 2020 by Gaston Williams
+       5/       0 :                     ;
+       6/       0 :                     ; *******************************************************************************************
+       7/       0 : ="TRUE"             UseGraphics			EQU "TRUE"
+       8/       0 : ="64x32"            Resolution			EQU "64x32"			; "64x32" or "64x64"
+       9/       0 : ="OFF"              BackBuffer			EQU "OFF"			; 'OFF', 'COPY' or 'SWAP'
+      10/       0 :                     
+      11/       0 : ="TRUE"             UseText				EQU "TRUE"
+      12/       0 : ="TRUE"             UseTty				EQU "TRUE"
+      13/       0 :                     
+      14/       0 :                     			INCLUDE "StdDefs.asm"
+(1)    1/       0 :                     ; *****************************************************************************************
+(1)    2/       0 :                     ; Copyright (c) 2020 
+(1)    3/       0 :                     ; by Richard Dienstknecht
+(1)    4/       0 :                     ;
+(1)    5/       0 :                     ; Changes:
+(1)    6/       0 :                     ; Gaston Williams, July, 2020   - Added Macros for Std Call and Std Return
+(1)    7/       0 :                     ; Gaston Williams  August, 2020 - Added Macro for loading Register
+(1)    8/       0 :                     ; *****************************************************************************************
+(1)    9/       0 :                     
+(1)   10/       0 :                     ; =========================================================================================
+(1)   11/       0 :                     ; Register definitions
+(1)   12/       0 :                     ; =========================================================================================
+(1)   13/       0 :                     
+(1)   14/       0 : =0H                 R0					EQU 00H
+(1)   15/       0 : =1H                 R1					EQU 01H
+(1)   16/       0 : =2H                 R2					EQU 02H
+(1)   17/       0 : =3H                 R3					EQU 03H
+(1)   18/       0 : =4H                 R4					EQU 04H
+(1)   19/       0 : =5H                 R5					EQU 05H
+(1)   20/       0 : =6H                 R6					EQU 06H
+(1)   21/       0 : =7H                 R7					EQU 07H
+(1)   22/       0 : =8H                 R8					EQU 08H
+(1)   23/       0 : =9H                 R9					EQU 09H
+(1)   24/       0 : =0AH                RA					EQU 0AH
+(1)   25/       0 : =0BH                RB					EQU 0BH
+(1)   26/       0 : =0CH                RC					EQU 0CH
+(1)   27/       0 : =0DH                RD					EQU 0DH
+(1)   28/       0 : =0EH                RE					EQU 0EH
+(1)   29/       0 : =0FH                RF					EQU 0FH
+(1)   30/       0 :                     
+(1)   31/       0 :                     ;------------------------------------------------------------------------------------------
+(1)   32/       0 :                     ; =========================================================================================
+(1)   33/       0 :                     ; Macro definitions for standard call and return
+(1)   34/       0 :                     ; See RCA CDP1802 User Manual, page 61 for more information
+(1)   35/       0 :                     ; =========================================================================================
+(1)   36/       0 :                     
+(1)   37/       0 :                     CALL	MACRO	param1
+(1)   38/       0 :                     	SEP R4
+(1)   39/       0 :                     	dw  param1
+(1)   40/       0 :                     	ENDM
+(1)   41/       0 :                     	
+(1)   42/       0 :                     RETURN	MACRO
+(1)   43/       0 :                     	SEP R5
+(1)   44/       0 :                     	ENDM
+(1)   45/       0 :                     	
+(1)   46/       0 :                     LOAD    MACRO 	param1, param2
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(StdDefs.asm) - Page 2 - 8/28/2020 13:38:20
+
+
+(1)   47/       0 :                     	LDI  lo(param2)
+(1)   48/       0 :                     	PLO  param1
+(1)   49/       0 :                     	LDI  hi(param2)
+(1)   50/       0 :                     	PHI  param1	
+(1)   51/       0 :                     	ENDM
+      15/       0 :                     			INCLUDE "Initialize.asm"
+(1)    1/       0 :                     ; *****************************************************************************************
+(1)    2/       0 :                     ; Copyright (c) 2020 
+(1)    3/       0 :                     ; by Richard Dienstknecht
+(1)    4/       0 :                     ;
+(1)    5/       0 :                     ; Changes:
+(1)    6/       0 :                     ; Gaston Williams, July,   2020 - Rewrote Initialisation.asm file as Initialize.asm
+(1)    7/       0 :                     ; Gaston Williams, July,   2020 - Removed unused include files
+(1)    8/       0 :                     ; Gaston Williams, July,   2020 - Replaced Std Call and Return with Macros
+(1)    9/       0 :                     ; Gaston Williams  August, 2020 - Added IF blocks to change compile order
+(1)   10/       0 :                     ; Gaston Williams  August, 2020 - Included padding file
+(1)   11/       0 :                     ; Gaston Williams  August, 2020 - Added Macro for loading Register
+(1)   12/       0 :                     ; *****************************************************************************************
+(1)   13/       0 :                     				INCLUDE "bitfuncs.inc"
+(2)    1/       0 : =>UNDEFINED         		ifndef   bitfuncsinc    ; avoid multiple inclusion
+(2)    2/       0 : =1H                 bitfuncsinc     equ      1
+(2)    3/       0 :                     
+(2)    4/       0 :                                     save
+(2)   77/       0 : ALL                                 restore                 ; allow listing again
+(2)   78/       0 :                     
+(2)   79/       0 : [1]                                 endif			; bitfuncsinc
+(2)   80/       0 :                     
+(2)   81/       0 :                     
+(1)   14/       0 :                     				INCLUDE "buffers.asm"
+(2)    1/       0 :                     ; *****************************************************************************************
+(2)    2/       0 :                     ; Copyright (c) 2020 
+(2)    3/       0 :                     ; by Richard Dienstknecht
+(2)    4/       0 :                     ;
+(2)    5/       0 :                     ; Changes:
+(2)    6/       0 :                     ; Gaston Williams, July, 2020 - Removed 64 x 128 Resolution logic
+(2)    7/       0 :                     ; Gaston Williams, July, 2020 - Put Buffer definitions into a separate file
+(2)    8/       0 :                     ; Gaston Williams, August, 2020 - Added Cursor and Video flag definitions
+(2)    9/       0 :                     ; *****************************************************************************************
+(2)   10/       0 :                     
+(2)   11/       0 :                     ; =========================================================================================
+(2)   12/       0 :                     ; Define Video Buffers and Main Stack
+(2)   13/       0 :                     ; =========================================================================================
+(2)   14/       0 :                     					CPU 1802
+(2)   15/       0 :                     					
+(2)   16/       0 :                     ; =========================================================================================
+(2)   17/       0 :                     ; Display buffers
+(2)   18/       0 :                     ; =========================================================================================
+(2)   19/       0 : =>TRUE              		IF BackBuffer == "OFF"			; OFF uses only one video buffer
+(2)   20/       0 : =>TRUE              			IF Resolution == "64x32"
+(2)   21/    7E00 :                     				ORG 7E00H	
+(2)   22/    7E00 :                     DisplayBuffer:			db 256 dup (?)
+(2)   23/    7F00 : [20]                			ENDIF
+(2)   24/    7F00 :                     
+(2)   25/    7F00 : =>FALSE             			IF Resolution == "64x64"
+(2)   26/    7F00 :                     				ORG 7D00H
+(2)   27/    7F00 :                     DisplayBuffer:			db 512 dup (?)
+(2)   28/    7F00 : [25]                			ENDIF
+(2)   29/    7F00 :                     					
+(2)   30/    7F00 : =>FALSE             		ELSEIF					; COPY and SWAP use two video buffers
+(2)   31/    7F00 :                     			IF Resolution == "64x32"
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(buffers.asm) - Page 3 - 8/28/2020 13:38:20
+
+
+(2)   32/    7F00 :                     				ORG 7D00H	
+(2)   33/    7F00 :                     DisplayBuffer:			db 256 dup (?)
+(2)   34/    7F00 :                     DoubleBuffer:			db 256 dup (?)
+(2)   35/    7F00 : [31]                			ENDIF
+(2)   36/    7F00 :                     
+(2)   37/    7F00 :                     			IF Resolution == "64x64"
+(2)   38/    7F00 :                     				ORG 7B00H
+(2)   39/    7F00 :                     DisplayBuffer:			db 512 dup (?)
+(2)   40/    7F00 :                     DoubleBuffer:			db 512 dup (?)
+(2)   41/    7F00 : [37]                			ENDIF
+(2)   42/    7F00 :                     					
+(2)   43/    7F00 : [19]                		ENDIF
+(2)   44/    7F00 :                     
+(2)   45/    7F00 :                     				ORG 7F00H
+(2)   46/    7F00 :                     				
+(2)   47/    7F00 :                     ; =========================================================================================
+(2)   48/    7F00 :                     ; Buffer for unpacked characters
+(2)   49/    7F00 :                     ; =========================================================================================
+(2)   50/    7F00 :                     
+(2)   51/    7F00 :                     CharacterPattern:	db 5 dup ?
+(2)   52/    7F05 :                     
+(2)   53/    7F05 :                     ; =========================================================================================
+(2)   54/    7F05 :                     ; Cursor location for video console
+(2)   55/    7F05 :                     ; =========================================================================================
+(2)   56/    7F05 :                     
+(2)   57/    7F05 :                     CursorX			db ?
+(2)   58/    7F06 :                     
+(2)   59/    7F06 :                     CursorY			db ?
+(2)   60/    7F07 :                     ;------------------------------------------------------------------------------------------
+(2)   61/    7F07 :                     
+(2)   62/    7F07 :                     ; =========================================================================================
+(2)   63/    7F07 :                     ; Flag to indicate if 1861 Video is currently on or off
+(2)   64/    7F07 :                     ; =========================================================================================
+(2)   65/    7F07 :                     
+(2)   66/    7F07 :                     VideoFlag		db ?
+(2)   67/    7F08 :                     ;------------------------------------------------------------------------------------------
+(2)   68/    7F08 :                     
+(2)   69/    7F08 :                     ; 
+(2)   70/    7F08 :                     ;Buffers and variables end at 7F08, leaving 120 bytes available for program stack
+(2)   71/    7F08 :                     
+(2)   72/    7F08 :                     
+(2)   73/    7F08 :                     ; =========================================================================================
+(2)   74/    7F08 :                     ; Space for the main stack
+(2)   75/    7F08 :                     ; =========================================================================================
+(2)   76/    7F08 :                     
+(2)   77/    7F08 :                     					
+(2)   78/    7F7F :                     			ORG 7F7FH
+(2)   79/    7F7F :                     StackTop:
+(2)   80/    7F7F :                     ;------------------------------------------------------------------------------------------	
+(2)   81/    7F7F :                     
+(2)   82/    7F7F :                     ; =========================================================================================
+(2)   83/    7F7F :                     ; Reserve 7F80H to 7FFFH for Super Monitor program
+(2)   84/    7F7F :                     ; =========================================================================================
+(1)   15/    7F7F :                     
+(1)   16/    7F7F :                     ; =========================================================================================
+(1)   17/    7F7F :                     ; Starting point of the program and initialisation of the CPU registers
+(1)   18/    7F7F :                     ;
+(1)   19/    7F7F :                     ; R0		Reserved as pointer to the DMA buffer
+(1)   20/    7F7F :                     ; R1		Reserved as interrupt vector
+(1)   21/    7F7F :                     ; R2		Main stack pointer
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Initialize.asm) - Page 4 - 8/28/2020 13:38:20
+
+
+(1)   22/    7F7F :                     ; R3		Main program counter
+(1)   23/    7F7F :                     ; R4		Program counter for standard call procedure
+(1)   24/    7F7F :                     ; R5		Program counter for standard return procedure
+(1)   25/    7F7F :                     ; R6		Reserved for temporary values from standard call/return procedures
+(1)   26/    7F7F :                     ; R7 - RF	Free to use in the program, not initialized
+(1)   27/    7F7F :                     ; =========================================================================================	
+(1)   28/    7F7F :                     				CPU 1802
+(1)   29/       0 :                     				ORG 0000H
+(1)   30/       0 :                     		
+(1)   31/       0 : (MACRO)             Init:				LOAD R1, DisplayInt	; DMA Buffer pointer
+(1)   31/       0 : F8 44                       LDI  lo(DISPLAYINT)
+(1)   31/       2 : A1                          PLO  R1
+(1)   31/       3 : F8 00                       LDI  hi(DISPLAYINT)
+(1)   31/       5 : B1                          PHI  R1     
+(1)   32/       6 :                     				
+(1)   33/       6 : (MACRO)             				LOAD R2, StackTop	; Main Stack pointer
+(1)   33/       6 : F8 7F                       LDI  lo(STACKTOP)
+(1)   33/       8 : A2                          PLO  R2
+(1)   33/       9 : F8 7F                       LDI  hi(STACKTOP)
+(1)   33/       B : B2                          PHI  R2     
+(1)   34/       C :                     				
+(1)   35/       C : (MACRO)             				LOAD R3, Start		; Main Program Counter
+(1)   35/       C : F8 C8                       LDI  lo(START)
+(1)   35/       E : A3                          PLO  R3
+(1)   35/       F : F8 04                       LDI  hi(START)
+(1)   35/      11 : B3                          PHI  R3     
+(1)   36/      12 :                     				
+(1)   37/      12 : (MACRO)             				LOAD R4, StdCall	; Standard CALL procedure
+(1)   37/      12 : F8 20                       LDI  lo(STDCALL)
+(1)   37/      14 : A4                          PLO  R4
+(1)   37/      15 : F8 00                       LDI  hi(STDCALL)
+(1)   37/      17 : B4                          PHI  R4     
+(1)   38/      18 :                     				
+(1)   39/      18 : (MACRO)             				LOAD R5, StdReturn	; Standard RETURN procedure
+(1)   39/      18 : F8 30                       LDI  lo(STDRETURN)
+(1)   39/      1A : A5                          PLO  R5
+(1)   39/      1B : F8 00                       LDI  hi(STDRETURN)
+(1)   39/      1D : B5                          PHI  R5     
+(1)   40/      1E :                     				
+(1)   41/      1E : D3                  				SEP  R3			; Run Main program
+(1)   42/      1F :                     ;------------------------------------------------------------------------------------------
+(1)   43/      1F :                     
+(1)   44/      1F :                     
+(1)   45/      1F :                     ; =========================================================================================
+(1)   46/      1F :                     ; Standard Call Procedure
+(1)   47/      1F :                     ; as described in RCA CDP1802 User Manual, page 61 
+(1)   48/      1F :                     ; =========================================================================================
+(1)   49/      1F : D3                  STC_Exit:			SEP  R3
+(1)   50/      20 : E2                  StdCall:			SEX  R2
+(1)   51/      21 : 96                  				GHI  R6
+(1)   52/      22 : 73                  				STXD
+(1)   53/      23 : 86                  				GLO  R6
+(1)   54/      24 : 73                  				STXD
+(1)   55/      25 : 93                  				GHI  R3
+(1)   56/      26 : B6                  				PHI  R6
+(1)   57/      27 : 83                  				GLO  R3
+(1)   58/      28 : A6                  				PLO  R6
+(1)   59/      29 : 46                  				LDA  R6
+(1)   60/      2A : B3                  				PHI  R3
+(1)   61/      2B : 46                  				LDA  R6
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Initialize.asm) - Page 5 - 8/28/2020 13:38:20
+
+
+(1)   62/      2C : A3                  				PLO  R3
+(1)   63/      2D : 30 1F               				BR   STC_Exit
+(1)   64/      2F :                     
+(1)   65/      2F :                     ;------------------------------------------------------------------------------------------
+(1)   66/      2F :                     
+(1)   67/      2F :                     
+(1)   68/      2F :                     ; =========================================================================================
+(1)   69/      2F :                     ; Standard Return Procedure
+(1)   70/      2F :                     ; as described in RCA CDP1802 User Manual, page 61 
+(1)   71/      2F :                     ; =========================================================================================
+(1)   72/      2F : D3                  STR_Exit:			SEP  R3
+(1)   73/      30 : 96                  StdReturn			GHI  R6
+(1)   74/      31 : B3                  				PHI  R3
+(1)   75/      32 : 86                  				GLO  R6
+(1)   76/      33 : A3                  				PLO  R3
+(1)   77/      34 : E2                  				SEX  R2
+(1)   78/      35 : 12                  				INC  R2
+(1)   79/      36 : 72                  				LDXA
+(1)   80/      37 : A6                  				PLO  R6
+(1)   81/      38 : F0                  				LDX
+(1)   82/      39 : B6                  				PHI  R6
+(1)   83/      3A : 30 2F               				BR   STR_Exit
+(1)   84/      3C :                     
+(1)   85/      3C :                     ;------------------------------------------------------------------------------------------
+(1)   86/      3C :                     
+(1)   87/      3C :                     
+(1)   88/      3C :                     ; =========================================================================================
+(1)   89/      3C :                     ; Simple delay loop
+(1)   90/      3C :                     ; 
+(1)   91/      3C :                     ; Parameters:
+(1)   92/      3C :                     ; RF.0				Delay time
+(1)   93/      3C :                     ; =========================================================================================
+(1)   94/      3C : C4                  Delay:				NOP
+(1)   95/      3D : 2F                  				DEC  RF
+(1)   96/      3E : 8F                  				GLO  RF
+(1)   97/      3F : 3A 3C               				BNZ  Delay
+(1)   98/      41 : (MACRO)             				RETURN
+(1)   98/      41 : D5                          SEP R5
+(1)   99/      42 :                     
+(1)  100/      42 :                     ;------------------------------------------------------------------------------------------
+(1)  101/      42 :                     
+(1)  102/      42 :                     
+(1)  103/      42 :                     ; =========================================================================================
+(1)  104/      42 :                     ; Includes - Change order of compiling to jump target not on same page errors
+(1)  105/      42 :                     ; =========================================================================================
+(1)  106/      42 :                     
+(1)  107/      42 :                     				INCLUDE "Graphics1861.asm"
+(2)    1/      42 :                     ; *****************************************************************************************
+(2)    2/      42 :                     ; Copyright (c) 2020 
+(2)    3/      42 :                     ; by Richard Dienstknecht
+(2)    4/      42 :                     ;
+(2)    5/      42 :                     ; Changes:
+(2)    6/      42 :                     ; Gaston Williams, July, 2020   - Removed 64 x 128 Resolution logic
+(2)    7/      42 :                     ; Gaston Williams, July, 2020   - Replaced Std Call and Std Return with Macros
+(2)    8/      42 :                     ; Gaston Williams  August, 2020 - Added Macro for loading Register
+(2)    9/      42 :                     ; *****************************************************************************************
+(2)   10/      42 :                     
+(2)   11/      42 : =>TRUE              				IF UseGraphics == "TRUE"
+(2)   12/      42 :                     
+(2)   13/      42 :                     
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Graphics1861.asm) - Page 6 - 8/28/2020 13:38:20
+
+
+(2)   14/      42 :                     ; =========================================================================================
+(2)   15/      42 :                     ; Interrupt and DMA service routine for the CDP1861 to display an effective resolution
+(2)   16/      42 :                     ; of 64 x 32 pixels, using a display buffer of 256 bytes.
+(2)   17/      42 :                     ; =========================================================================================
+(2)   18/      42 :                     
+(2)   19/      42 : =>TRUE              					IF Resolution == "64x32"
+(2)   20/      42 :                     
+(2)   21/      42 : 72                  INT_Exit:			LDXA
+(2)   22/      43 : 70                  					RET
+(2)   23/      44 : 22                  DisplayInt:			DEC  R2
+(2)   24/      45 : 78                  					SAV
+(2)   25/      46 : 22                  					DEC  R2
+(2)   26/      47 : 52                  					STR  R2
+(2)   27/      48 : C4                  					NOP
+(2)   28/      49 : C4                  					NOP
+(2)   29/      4A : C4                  					NOP
+(2)   30/      4B :                     
+(2)   31/      4B : =>TRUE              					IF BackBuffer <> "SWAP"
+(2)   32/      4B : F8 7E               					LDI  hi(DisplayBuffer)
+(2)   33/      4D : [31]                					ENDIF
+(2)   34/      4D :                     
+(2)   35/      4D : =>FALSE             					IF BackBuffer == "SWAP"
+(2)   36/      4D :                     					GHI  R7
+(2)   37/      4D : [35]                					ENDIF
+(2)   38/      4D :                     
+(2)   39/      4D : B0                  					PHI  R0
+(2)   40/      4E : F8 00               					LDI  00H
+(2)   41/      50 : A0                  					PLO  R0
+(2)   42/      51 : 80                  INT_Loop:			GLO  R0
+(2)   43/      52 : E2                  					SEX  R2
+(2)   44/      53 : E2                  					SEX  R2
+(2)   45/      54 : 20                  					DEC  R0
+(2)   46/      55 : A0                  					PLO  R0
+(2)   47/      56 : E2                  					SEX  R2
+(2)   48/      57 : 20                  					DEC  R0
+(2)   49/      58 : A0                  					PLO  R0
+(2)   50/      59 : E2                  					SEX  R2
+(2)   51/      5A : 20                  					DEC  R0
+(2)   52/      5B : A0                  					PLO  R0
+(2)   53/      5C : 3C 51               					BN1  INT_Loop
+(2)   54/      5E : 30 42               					BR   INT_Exit
+(2)   55/      60 :                     
+(2)   56/      60 : [19]                					ENDIF
+(2)   57/      60 :                     				
+(2)   58/      60 :                     ;------------------------------------------------------------------------------------------
+(2)   59/      60 :                     
+(2)   60/      60 :                     
+(2)   61/      60 :                     ; =========================================================================================
+(2)   62/      60 :                     ; Interrupt and DMA service routine for the CDP1861 to display an effective resolution
+(2)   63/      60 :                     ; of 64 x 64 pixels, using a display buffer of 512 bytes.
+(2)   64/      60 :                     ; =========================================================================================
+(2)   65/      60 :                     
+(2)   66/      60 : =>FALSE             					IF Resolution == "64x64"
+(2)   67/      60 :                     
+(2)   68/      60 :                     INT_Exit:			LDXA
+(2)   69/      60 :                     					RET
+(2)   70/      60 :                     DisplayInt:			NOP
+(2)   71/      60 :                     					DEC  R2
+(2)   72/      60 :                     					SAV
+(2)   73/      60 :                     					DEC  R2
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Graphics1861.asm) - Page 7 - 8/28/2020 13:38:20
+
+
+(2)   74/      60 :                     					STR  R2
+(2)   75/      60 :                     
+(2)   76/      60 :                     					IF BackBuffer <> "SWAP"
+(2)   77/      60 :                     					LDI  hi(DisplayBuffer)
+(2)   78/      60 : [76]                					ENDIF
+(2)   79/      60 :                     
+(2)   80/      60 :                     					IF BackBuffer == "SWAP"
+(2)   81/      60 :                     					GHI  R7
+(2)   82/      60 : [80]                					ENDIF
+(2)   83/      60 :                     
+(2)   84/      60 :                     					PHI  R0
+(2)   85/      60 :                     					LDI  00H
+(2)   86/      60 :                     					PLO  R0
+(2)   87/      60 :                     					NOP
+(2)   88/      60 :                     					NOP
+(2)   89/      60 :                     					SEX  R2
+(2)   90/      60 :                     INT_Loop:			GLO  R0
+(2)   91/      60 :                     					SEX  R2
+(2)   92/      60 :                     					DEC  R0
+(2)   93/      60 :                     					PLO  R0
+(2)   94/      60 :                     					SEX  R2
+(2)   95/      60 :                     					BN1  INT_Loop
+(2)   96/      60 :                     INT_Rest:			GLO  R0
+(2)   97/      60 :                     					SEX  R2
+(2)   98/      60 :                     					DEC  R0
+(2)   99/      60 :                     					PLO  R0
+(2)  100/      60 :                     					B1   INT_Rest
+(2)  101/      60 :                     					BR   INT_Exit
+(2)  102/      60 :                     
+(2)  103/      60 : [66]                					ENDIF
+(2)  104/      60 :                     
+(2)  105/      60 :                     ;------------------------------------------------------------------------------------------
+(2)  106/      60 :                     
+(2)  107/      60 :                     ; =========================================================================================
+(2)  108/      60 :                     ; Parameters:
+(2)  109/      60 :                     ; RF		Pointer to the image
+(2)  110/      60 :                     ;
+(2)  111/      60 :                     ; Internal:
+(2)  112/      60 :                     ; RE		Pointer to video buffer
+(2)  113/      60 :                     ; =========================================================================================
+(2)  114/      60 :                     
+(2)  115/      60 :                     					
+(2)  116/      60 : =>TRUE              CopyImage:			IF BackBuffer == "OFF"
+(2)  117/      60 : F8 7E               					LDI  hi(DisplayBuffer)			; prepare the pointer to the video buffer
+(2)  118/      62 : BE                  					PHI  RE
+(2)  119/      63 : [116]               					ENDIF
+(2)  120/      63 :                     
+(2)  121/      63 : =>FALSE             					IF BackBuffer == "COPY"
+(2)  122/      63 :                     					LDI  hi(DoubleBuffer)			; prepare the pointer to the back buffer
+(2)  123/      63 :                     					PHI  RE
+(2)  124/      63 : [121]               					ENDIF
+(2)  125/      63 :                     
+(2)  126/      63 : =>FALSE             					IF BackBuffer == "SWAP"
+(2)  127/      63 :                     					GLO  R7							; prepare the pointer to the current back buffer
+(2)  128/      63 :                     					PHI  RE
+(2)  129/      63 : [126]               					ENDIF
+(2)  130/      63 :                     
+(2)  131/      63 : F8 00               					LDI  00H
+(2)  132/      65 : AE                  					PLO  RE
+(2)  133/      66 :                     
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Graphics1861.asm) - Page 8 - 8/28/2020 13:38:20
+
+
+(2)  134/      66 : 4F                  CI_Loop:			LDA  RF
+(2)  135/      67 : 5E                  					STR  RE
+(2)  136/      68 : 1E                  					INC  RE
+(2)  137/      69 : 8E                  					GLO  RE
+(2)  138/      6A : 3A 66               					BNZ  CI_Loop
+(2)  139/      6C :                     					
+(2)  140/      6C : =>FALSE             					IF Resolution == "64x64"					
+(2)  141/      6C :                     					IF BackBuffer == "OFF"
+(2)  142/      6C :                     					LDI   hi(DisplayBuffer) + 1
+(2)  143/      6C : [141]               					ENDIF
+(2)  144/      6C :                     
+(2)  145/      6C :                     					IF BackBuffer == "COPY"
+(2)  146/      6C :                     					LDI   hi(DoubleBuffer) + 1
+(2)  147/      6C : [145]               					ENDIF
+(2)  148/      6C :                     
+(2)  149/      6C :                     					IF BackBuffer == "SWAP"
+(2)  150/      6C :                     					GLO  R7
+(2)  151/      6C :                     					ADI	 01H
+(2)  152/      6C : [149]               					ENDIF
+(2)  153/      6C :                     
+(2)  154/      6C :                     					STR  R2
+(2)  155/      6C :                     					GHI  RE
+(2)  156/      6C :                     					SD
+(2)  157/      6C :                     					BDF  CI_Loop				
+(2)  158/      6C : [140]               					ENDIF
+(2)  159/      6C :                     									
+(2)  160/      6C : (MACRO)             					RETURN					
+(2)  160/      6C : D5                          SEP R5
+(2)  161/      6D :                     
+(2)  162/      6D :                     ;------------------------------------------------------------------------------------------
+(2)  163/      6D :                     
+(2)  164/      6D :                     
+(2)  165/      6D :                     ; =========================================================================================
+(2)  166/      6D :                     ; Parameters:
+(2)  167/      6D :                     ; RF		Value for filling
+(2)  168/      6D :                     ;
+(2)  169/      6D :                     ; Internal:
+(2)  170/      6D :                     ; RE		Pointer to video buffer
+(2)  171/      6D :                     ; =========================================================================================
+(2)  172/      6D :                     
+(2)  173/      6D : =>TRUE              FillScreen:			IF BackBuffer == "OFF"
+(2)  174/      6D : F8 7E               					LDI  hi(DisplayBuffer)			; prepare the pointer to the video buffer
+(2)  175/      6F : BE                  					PHI  RE
+(2)  176/      70 : [173]               					ENDIF
+(2)  177/      70 :                     
+(2)  178/      70 : =>FALSE             					IF BackBuffer == "COPY"
+(2)  179/      70 :                     					LDI  hi(DoubleBuffer)			; prepare the pointer to the back buffer
+(2)  180/      70 :                     					PHI  RE
+(2)  181/      70 : [178]               					ENDIF
+(2)  182/      70 :                     
+(2)  183/      70 : =>FALSE             					IF BackBuffer == "SWAP"
+(2)  184/      70 :                     					GLO  R7							; prepare the pointer to the current back buffer
+(2)  185/      70 :                     					PHI  RE
+(2)  186/      70 : [183]               					ENDIF
+(2)  187/      70 :                     
+(2)  188/      70 : F8 00               					LDI  00H
+(2)  189/      72 : AE                  					PLO  RE
+(2)  190/      73 :                     
+(2)  191/      73 : 9F                  FS_Loop:			GHI  RF
+(2)  192/      74 : 5E                  					STR  RE
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Graphics1861.asm) - Page 9 - 8/28/2020 13:38:20
+
+
+(2)  193/      75 : 1E                  					INC  RE
+(2)  194/      76 : 8E                  					GLO  RE
+(2)  195/      77 : 3A 73               					BNZ  FS_Loop
+(2)  196/      79 :                     					
+(2)  197/      79 : =>FALSE             					IF Resolution == "64x64"
+(2)  198/      79 :                     					IF BackBuffer == "OFF"
+(2)  199/      79 :                     					LDI   hi(DisplayBuffer) + 1
+(2)  200/      79 : [198]               					ENDIF
+(2)  201/      79 :                     
+(2)  202/      79 :                     					IF BackBuffer == "COPY"
+(2)  203/      79 :                     					LDI   hi(DoubleBuffer) + 1
+(2)  204/      79 : [202]               					ENDIF
+(2)  205/      79 :                     
+(2)  206/      79 :                     					IF BackBuffer == "SWAP"
+(2)  207/      79 :                     					GLO  R7
+(2)  208/      79 :                     					ADI  01H
+(2)  209/      79 : [206]               					ENDIF
+(2)  210/      79 :                     
+(2)  211/      79 :                     					STR  R2
+(2)  212/      79 :                     					GHI  RE
+(2)  213/      79 :                     					SD
+(2)  214/      79 :                     					BDF  FS_Loop				
+(2)  215/      79 : [197]               					ENDIF
+(2)  216/      79 :                     					
+(2)  217/      79 : (MACRO)             					RETURN					
+(2)  217/      79 : D5                          SEP R5
+(2)  218/      7A :                     
+(2)  219/      7A :                     ;------------------------------------------------------------------------------------------
+(2)  220/      7A :                     
+(2)  221/      7A :                     
+(2)  222/      7A :                     ; =========================================================================================
+(2)  223/      7A :                     ; Parameters:
+(2)  224/      7A :                     ; RE.0		X coordinate of the sprite
+(2)  225/      7A :                     ; RE.1		Y coordinate of the sprite
+(2)  226/      7A :                     ; RF		Pointer to sprite
+(2)  227/      7A :                     ; RD		Size of the sprite in bytes
+(2)  228/      7A :                     ;
+(2)  229/      7A :                     ; Internal:
+(2)  230/      7A :                     ; RC		Pointer to video memory
+(2)  231/      7A :                     ; =========================================================================================
+(2)  232/      7A :                     
+(2)  233/      7A : =>TRUE              DrawSprite:			IF BackBuffer == "OFF"
+(2)  234/      7A : F8 7E               					LDI  hi(DisplayBuffer)			; prepare the pointer to the video buffer
+(2)  235/      7C : [233]               					ENDIF
+(2)  236/      7C :                     
+(2)  237/      7C : =>FALSE             					IF BackBuffer == "COPY"
+(2)  238/      7C :                     					LDI  hi(DoubleBuffer)			; prepare the pointer to the back buffer
+(2)  239/      7C : [237]               					ENDIF
+(2)  240/      7C :                     
+(2)  241/      7C : =>FALSE             					IF BackBuffer == "SWAP"
+(2)  242/      7C :                     					GLO  R7							; prepare the pointer to the current back buffer
+(2)  243/      7C : [241]               					ENDIF
+(2)  244/      7C :                     					
+(2)  245/      7C : BC                  					PHI  RC							; DisplayBuffer + Y * 8 + X / 8
+(2)  246/      7D : 9E                  					GHI  RE							; result goes to RC
+(2)  247/      7E :                     
+(2)  248/      7E : =>TRUE              					IF Resolution == "64x32"
+(2)  249/      7E : FA 1F               					ANI  1FH						; between 0 - 31
+(2)  250/      80 : [248]               					ENDIF
+(2)  251/      80 :                     				
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Graphics1861.asm) - Page 10 - 8/28/2020 13:38:20
+
+
+(2)  252/      80 : =>FALSE             					IF Resolution == "64x64"
+(2)  253/      80 :                     					ANI  3FH						; or 0 - 63
+(2)  254/      80 : [252]               					ENDIF
+(2)  255/      80 :                     
+(2)  256/      80 : FE                  					SHL
+(2)  257/      81 : FE                  					SHL
+(2)  258/      82 : FE                  					SHL
+(2)  259/      83 : AC                  					PLO  RC
+(2)  260/      84 : 3B 8A               					BNF  DSP_SkipIncrement
+(2)  261/      86 : 9C                  					GHI  RC
+(2)  262/      87 : FC 01               					ADI  01H
+(2)  263/      89 : BC                  					PHI  RC
+(2)  264/      8A :                     					
+(2)  265/      8A : 8C                  DSP_SkipIncrement:	GLO  RC
+(2)  266/      8B : 52                  					STR  R2
+(2)  267/      8C : 8E                  					GLO  RE
+(2)  268/      8D : FA 3F               					ANI  3FH
+(2)  269/      8F : F6                  					SHR
+(2)  270/      90 : F6                  					SHR
+(2)  271/      91 : F6                  					SHR
+(2)  272/      92 : F4                  					ADD
+(2)  273/      93 : AC                  					PLO  RC
+(2)  274/      94 : 8E                  					GLO  RE							; calculate the number of required shifts 
+(2)  275/      95 : FA 07               					ANI  07H						; result to RE.1, replacing the Y coordinate
+(2)  276/      97 : BE                  					PHI  RE							; RE.0 will be used later to count the shifts
+(2)  277/      98 :                     
+(2)  278/      98 : 8D                  DSP_ByteLoop:		GLO  RD							; exit if all bytes of the sprite have been drawn
+(2)  279/      99 : 32 CA               					BZ   DSP_Exit
+(2)  280/      9B :                     					
+(2)  281/      9B : =>TRUE              					IF Resolution == "64x32"		; or if we are about to draw outside the video buffer
+(2)  282/      9B : =>TRUE              					IF BackBuffer == "OFF"
+(2)  283/      9B : F8 7E               					LDI   hi(DisplayBuffer)
+(2)  284/      9D : [282]               					ENDIF
+(2)  285/      9D :                     
+(2)  286/      9D : =>FALSE             					IF BackBuffer == "COPY"
+(2)  287/      9D :                     					LDI   hi(DoubleBuffer)
+(2)  288/      9D : [286]               					ENDIF
+(2)  289/      9D :                     
+(2)  290/      9D : =>FALSE             					IF BackBuffer == "SWAP"
+(2)  291/      9D :                     					GLO  R7
+(2)  292/      9D : [290]               					ENDIF
+(2)  293/      9D : [281]               					ENDIF
+(2)  294/      9D :                     
+(2)  295/      9D : =>FALSE             					IF Resolution == "64x64"
+(2)  296/      9D :                     					IF BackBuffer == "OFF"
+(2)  297/      9D :                     					LDI   hi(DisplayBuffer) + 1
+(2)  298/      9D : [296]               					ENDIF
+(2)  299/      9D :                     
+(2)  300/      9D :                     					IF BackBuffer == "COPY"
+(2)  301/      9D :                     					LDI   hi(DoubleBuffer) + 1
+(2)  302/      9D : [300]               					ENDIF
+(2)  303/      9D :                     
+(2)  304/      9D :                     					IF BackBuffer == "SWAP"
+(2)  305/      9D :                     					GLO  R7
+(2)  306/      9D :                     					ADI  01H
+(2)  307/      9D : [304]               					ENDIF
+(2)  308/      9D : [295]               					ENDIF
+(2)  309/      9D :                     
+(2)  310/      9D : 52                  					STR  R2
+(2)  311/      9E : 9C                  					GHI  RC
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Graphics1861.asm) - Page 11 - 8/28/2020 13:38:20
+
+
+(2)  312/      9F : F5                  					SD
+(2)  313/      A0 : 3B CA               					BNF  DSP_Exit
+(2)  314/      A2 : 0F                  					LDN	 RF							; load the next byte of the sprite into RB.0
+(2)  315/      A3 : AB                  					PLO  RB
+(2)  316/      A4 : F8 00               					LDI  00H						; set RB.1 to OOH
+(2)  317/      A6 : BB                  					PHI  RB
+(2)  318/      A7 : 2D                  					DEC  RD							; decrement the sprite's byte counter
+(2)  319/      A8 : 1F                  					INC  RF							; increment the pointer to the sprite's bytes
+(2)  320/      A9 : 9E                  					GHI  RE							; prepare the shift counter
+(2)  321/      AA : AE                  					PLO  RE
+(2)  322/      AB : 8E                  DSP_ShiftLoop:		GLO  RE							; exit the loop if all shifts have been performed
+(2)  323/      AC : 32 B7               					BZ   DSP_ShiftExit
+(2)  324/      AE : 2E                  					DEC  RE							; decrement the shift counter
+(2)  325/      AF : 8B                  					GLO  RB							; shift the values in RB
+(2)  326/      B0 : F6                  					SHR
+(2)  327/      B1 : AB                  					PLO  RB
+(2)  328/      B2 : 9B                  					GHI  RB
+(2)  329/      B3 : 76                  					RSHR
+(2)  330/      B4 : BB                  					PHI  RB
+(2)  331/      B5 : 30 AB               					BR   DSP_ShiftLoop
+(2)  332/      B7 : EC                  DSP_ShiftExit:		SEX  RC							; store the shifted bytes in the video buffer
+(2)  333/      B8 : 8B                  					GLO  RB
+(2)  334/      B9 : F3                  					XOR
+(2)  335/      BA : 5C                  					STR  RC
+(2)  336/      BB : 1C                  					INC  RC
+(2)  337/      BC : 9B                  					GHI  RB
+(2)  338/      BD : F3                  					XOR
+(2)  339/      BE : 5C                  					STR  RC
+(2)  340/      BF : E2                  					SEX  R2
+(2)  341/      C0 : 8C                  					GLO  RC							; advance the video buffer pointer to the next line
+(2)  342/      C1 : FC 07               					ADI  07H
+(2)  343/      C3 : AC                  					PLO  RC
+(2)  344/      C4 : 9C                  					GHI  RC
+(2)  345/      C5 : 7C 00               					ADCI 00H
+(2)  346/      C7 : BC                  					PHI  RC
+(2)  347/      C8 : 30 98               					BR   DSP_ByteLoop
+(2)  348/      CA : (MACRO)             DSP_Exit			RETURN
+(2)  348/      CA : D5                          SEP R5
+(2)  349/      CB :                     
+(2)  350/      CB :                     ;------------------------------------------------------------------------------------------
+(2)  351/      CB :                     
+(2)  352/      CB :                     
+(2)  353/      CB :                     ; =========================================================================================
+(2)  354/      CB :                     ; Parameters:
+(2)  355/      CB :                     ; ----
+(2)  356/      CB :                     ;
+(2)  357/      CB :                     ; Internal:
+(2)  358/      CB :                     ; RE		Pointer to video buffer
+(2)  359/      CB :                     ; RF		Pointer to back buffer
+(2)  360/      CB :                     ; =========================================================================================
+(2)  361/      CB :                     					
+(2)  362/      CB : =>FALSE             CopyBackBuffer:		IF BackBuffer <> "OFF"
+(2)  363/      CB :                     
+(2)  364/      CB :                     					IF BackBuffer == "COPY"					
+(2)  365/      CB :                     					LOAD RE, DisplayBuffer			; prepare the pointer to the video buffer
+(2)  366/      CB :                     
+(2)  367/      CB :                     					LOAD RF, DoubleBuffer			; prepare the pointer to the back buffer
+(2)  368/      CB :                     										
+(2)  369/      CB :                     CBB_Loop:				LDA  RF
+(2)  370/      CB :                     					STR  RE
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Graphics1861.asm) - Page 12 - 8/28/2020 13:38:20
+
+
+(2)  371/      CB :                     					INC  RE
+(2)  372/      CB :                     					GLO  RE
+(2)  373/      CB :                     					BNZ  CBB_Loop
+(2)  374/      CB :                     					
+(2)  375/      CB :                     					IF Resolution == "64x64"
+(2)  376/      CB :                     					LDI   hi(DisplayBuffer) + 1
+(2)  377/      CB : [375]               					ENDIF
+(2)  378/      CB :                     
+(2)  379/      CB :                     					STR  R2
+(2)  380/      CB :                     					GHI  RE
+(2)  381/      CB :                     					SD
+(2)  382/      CB :                     					BDF  CBB_Loop
+(2)  383/      CB : [364]               					ENDIF
+(2)  384/      CB :                     
+(2)  385/      CB :                     					IF BackBuffer == "SWAP"
+(2)  386/      CB :                     					GHI  R7
+(2)  387/      CB :                     					SMI  hi(DisplayBuffer)
+(2)  388/      CB :                     					BZ   CBB_Swap
+(2)  389/      CB :                     					LDI  hi(DisplayBuffer)
+(2)  390/      CB :                     					PHI  R7
+(2)  391/      CB :                     					LDI  hi(DoubleBuffer)
+(2)  392/      CB :                     					PLO  R7
+(2)  393/      CB :                     					BR   CBB_Exit
+(2)  394/      CB :                     CBB_Swap:			LDI  hi(DoubleBuffer)
+(2)  395/      CB :                     					PHI  R7
+(2)  396/      CB :                     					LDI  hi(DisplayBuffer)
+(2)  397/      CB :                     					PLO  R7
+(2)  398/      CB :                     					BR   CBB_Exit
+(2)  399/      CB : [385]               					ENDIF
+(2)  400/      CB :                     
+(2)  401/      CB : [362]               					ENDIF					
+(2)  402/      CB : (MACRO)             CBB_Exit:			RETURN		
+(2)  402/      CB : D5                          SEP R5
+(2)  403/      CC :                     
+(2)  404/      CC :                     ;------------------------------------------------------------------------------------------
+(2)  405/      CC :                     
+(2)  406/      CC : [11]                				ENDIF
+(2)  407/      CC :                     
+(1)  108/      CC :                     				
+(1)  109/      CC : =>FALSE             		IF Resolution == "64x64"				
+(1)  110/      CC :                     			IF BackBuffer == "OFF"
+(1)  111/      CC :                     				INCLUDE "Text1861.asm"							
+(1)  112/      CC :                     				INCLUDE "Fonts.asm"
+(1)  113/      CC :                     			ELSEIF
+(1)  114/      CC :                     				INCLUDE "Fonts.asm"
+(1)  115/      CC :                     				INCLUDE "Text1861.asm"				
+(1)  116/      CC : [110]               			ENDIF				
+(1)  117/      CC :                     				INCLUDE "Tty1861.asm"
+(1)  118/      CC : [109]               		ENDIF
+(1)  119/      CC :                     		
+(1)  120/      CC : =>TRUE              		IF Resolution == "64x32"				
+(1)  121/      CC : =>TRUE              			IF BackBuffer == "OFF"
+(1)  122/      CC :                     				INCLUDE "Text1861.asm"							
+(2)    1/      CC :                     ; *****************************************************************************************
+(2)    2/      CC :                     ; Copyright (c) 2020 
+(2)    3/      CC :                     ; by Richard Dienstknecht
+(2)    4/      CC :                     ;
+(2)    5/      CC :                     ; Changes:
+(2)    6/      CC :                     ; Gaston Williams, July, 2020   - Removed 64 x 128 Resolution logic
+(2)    7/      CC :                     ; Gaston Williams, July, 2020   - Moved Font definitions into separate file
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Text1861.asm) - Page 13 - 8/28/2020 13:38:20
+
+
+(2)    8/      CC :                     ; Gaston Williams, July, 2020   - Replaced Std Call and Std Return with Macros
+(2)    9/      CC :                     ; Gaston Williams  August, 2020 - Added Macro for loading Register
+(2)   10/      CC :                     ; *****************************************************************************************
+(2)   11/      CC :                     
+(2)   12/      CC : =>TRUE              		IF UseText == "TRUE"
+(2)   13/      CC :                     
+(2)   14/      CC :                     ; =========================================================================================
+(2)   15/      CC :                     ; Draws a zero terminated string at specified screen coordinates. 
+(2)   16/      CC :                     ;
+(2)   17/      CC :                     ; Parameters:
+(2)   18/      CC :                     ; RF		Pointer to the string
+(2)   19/      CC :                     ; RE.0		X coordinate
+(2)   20/      CC :                     ; RE.1		Y coordinate
+(2)   21/      CC :                     ; =========================================================================================
+(2)   22/      CC :                     
+(2)   23/      CC : 0F                  DrawString:		LDN  RF			; get character, exit if 0
+(2)   24/      CD : AC                  			PLO  RC
+(2)   25/      CE : 32 F0               			BZ   DS_Exit
+(2)   26/      D0 : 1F                  			INC  RF
+(2)   27/      D1 :                     					
+(2)   28/      D1 : 8F                  			GLO  RF			; push RF onto the stack
+(2)   29/      D2 : 73                  			STXD
+(2)   30/      D3 : 9F                  			GHI  RF
+(2)   31/      D4 : 73                  			STXD
+(2)   32/      D5 :                     					
+(2)   33/      D5 : 8E                  			GLO  RE			; push RE onto the stack
+(2)   34/      D6 : 73                  			STXD
+(2)   35/      D7 : 9E                  			GHI  RE
+(2)   36/      D8 : 73                  			STXD
+(2)   37/      D9 :                     					
+(2)   38/      D9 : (MACRO)             			CALL DrawCharacter	; draw the character
+(2)   38/      D9 : D4                          SEP R4
+(2)   38/      DA : 00 F1                       dw  DRAWCHARACTER
+(2)   39/      DC :                     					
+(2)   40/      DC : 60                  			IRX			; restore RE
+(2)   41/      DD : 72                  			LDXA
+(2)   42/      DE : BE                  			PHI  RE
+(2)   43/      DF : F0                  			LDX
+(2)   44/      E0 : AE                  			PLO  RE
+(2)   45/      E1 :                     					
+(2)   46/      E1 : 8F                  			GLO  RF			; advance the x coordinate by the
+(2)   47/      E2 : 73                  			STXD			; width of the character + 1
+(2)   48/      E3 : 60                  			IRX
+(2)   49/      E4 : 8E                  			GLO  RE
+(2)   50/      E5 : F4                  			ADD
+(2)   51/      E6 : FC 01               			ADI  01H
+(2)   52/      E8 : AE                  			PLO  RE
+(2)   53/      E9 :                     			
+(2)   54/      E9 : 60                  			IRX			; restore RF
+(2)   55/      EA : 72                  			LDXA
+(2)   56/      EB : BF                  			PHI  RF
+(2)   57/      EC : F0                  			LDX
+(2)   58/      ED : AF                  			PLO  RF
+(2)   59/      EE : 30 CC               			BR   DrawString		; continue with the next character
+(2)   60/      F0 :                     
+(2)   61/      F0 : (MACRO)             DS_Exit:		RETURN
+(2)   61/      F0 : D5                          SEP R5
+(2)   62/      F1 :                     
+(2)   63/      F1 :                     ;------------------------------------------------------------------------------------------
+(2)   64/      F1 :                     
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Text1861.asm) - Page 14 - 8/28/2020 13:38:20
+
+
+(2)   65/      F1 :                     
+(2)   66/      F1 :                     ; =========================================================================================
+(2)   67/      F1 :                     ; Draws a character at specified screen coordinates 
+(2)   68/      F1 :                     ;
+(2)   69/      F1 :                     ; Parameters:
+(2)   70/      F1 :                     ; RE.0		X coordinate of the character
+(2)   71/      F1 :                     ; RE.1		Y coordinate of the character
+(2)   72/      F1 :                     ; RC.0		ASCII code of the character (20 - 7F)
+(2)   73/      F1 :                     ; 
+(2)   74/      F1 :                     ; Internal:
+(2)   75/      F1 :                     ; RF		Pointer to the unpacked character's pattern
+(2)   76/      F1 :                     ; RD		Pointer to the font
+(2)   77/      F1 :                     ; RC.1		Temporary values
+(2)   78/      F1 :                     
+(2)   79/      F1 :                     ; Returns:
+(2)   80/      F1 :                     ; RF.0		Character width
+(2)   81/      F1 :                     ; =========================================================================================
+(2)   82/      F1 :                     
+(2)   83/      F1 : (MACRO)             DrawCharacter:		LOAD RF, CharacterPattern	; RF points to the buffer for the character pattern
+(2)   83/      F1 : F8 00                       LDI  lo(CHARACTERPATTERN)
+(2)   83/      F3 : AF                          PLO  RF
+(2)   83/      F4 : F8 7F                       LDI  hi(CHARACTERPATTERN)
+(2)   83/      F6 : BF                          PHI  RF     
+(2)   84/      F7 :                     								
+(2)   85/      F7 : (MACRO)             			LOAD RD, Font			; RD points to the font			
+(2)   85/      F7 : F8 6D                       LDI  lo(FONT)
+(2)   85/      F9 : AD                          PLO  RD
+(2)   85/      FA : F8 01                       LDI  hi(FONT)
+(2)   85/      FC : BD                          PHI  RD     
+(2)   86/      FD :                     				
+(2)   87/      FD : 8C                  			GLO  RC				; calculate the offset in the font
+(2)   88/      FE : FF 20               			SMI  020H			; (( character code - 20) / 2) * 6
+(2)   89/     100 : FA FE               			ANI  0FEH
+(2)   90/     102 : BC                  			PHI  RC
+(2)   91/     103 : FE                  			SHL
+(2)   92/     104 : 73                  			STXD
+(2)   93/     105 : 60                  			IRX					
+(2)   94/     106 : 9C                  			GHI  RC
+(2)   95/     107 : F4                  			ADD
+(2)   96/     108 : 73                  			STXD
+(2)   97/     109 : 60                  			IRX
+(2)   98/     10A : 3B 10               			BNF  DC_SkipHighByte
+(2)   99/     10C : 9D                  			GHI  RD
+(2)  100/     10D : FC 01               			ADI	 01H
+(2)  101/     10F : BD                  			PHI  RD
+(2)  102/     110 :                     					
+(2)  103/     110 : 8D                  DC_SkipHighByte:	GLO  RD				; add to the address in RD
+(2)  104/     111 : F4                  			ADD	
+(2)  105/     112 : AD                  			PLO  RD
+(2)  106/     113 : 3B 19               			BNF  DC_SkipHighByte2
+(2)  107/     115 : 9D                  			GHI  RD
+(2)  108/     116 : FC 01               			ADI  01H
+(2)  109/     118 : BD                  			PHI  RD
+(2)  110/     119 :                     
+(2)  111/     119 : 0D                  DC_SkipHighByte2:	LDN  RD				; get the width of the first character pattern
+(2)  112/     11A : F6                  			SHR
+(2)  113/     11B : F6                  			SHR
+(2)  114/     11C : F6                  			SHR
+(2)  115/     11D : F6                  			SHR
+(2)  116/     11E : 73                  			STXD
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Text1861.asm) - Page 15 - 8/28/2020 13:38:20
+
+
+(2)  117/     11F : 60                  			IRX
+(2)  118/     120 :                     
+(2)  119/     120 : 8C                  			GLO  RC				; do we need the first or the second pattern?
+(2)  120/     121 : FA 01               			ANI  01H
+(2)  121/     123 : BC                  			PHI  RC
+(2)  122/     124 : 3A 38               			BNZ  DC_PrepareSecond
+(2)  123/     126 :                     					
+(2)  124/     126 : F0                  			LDX				; prepare the mask					
+(2)  125/     127 : AB                  			PLO  RB	
+(2)  126/     128 : F8 00               			LDI  00H
+(2)  127/     12A : BB                  			PHI  RB
+(2)  128/     12B : 9B                  DC_MaskLoop:		GHI  RB
+(2)  129/     12C : F6                  			SHR
+(2)  130/     12D : F9 80               			ORI  80H
+(2)  131/     12F : BB                  			PHI  RB
+(2)  132/     130 : 2B                  			DEC  RB
+(2)  133/     131 : 8B                  			GLO  RB
+(2)  134/     132 : 3A 2B               			BNZ  DC_MaskLoop
+(2)  135/     134 :                     
+(2)  136/     134 : F0                  			LDX
+(2)  137/     135 : 73                  			STXD				; keep the width of the first pattern on the stack
+(2)  138/     136 : 30 3E               			BR   DC_CopyPattern
+(2)  139/     138 :                     
+(2)  140/     138 : F0                  DC_PrepareSecond:	LDX				; use the width of the first pattern for shifting
+(2)  141/     139 : BB                  			PHI  RB
+(2)  142/     13A :                     
+(2)  143/     13A : 0D                  			LDN  RD				; keep the width of the second character pattern on the stack
+(2)  144/     13B : FA 07               			ANI  07H
+(2)  145/     13D : 73                  			STXD
+(2)  146/     13E :                     
+(2)  147/     13E : 1D                  DC_CopyPattern:		INC  RD
+(2)  148/     13F : F8 05               			LDI  05H			; prepare a loop over the five bytes of the pattern
+(2)  149/     141 : AC                  			PLO  RC
+(2)  150/     142 :                     					
+(2)  151/     142 : 0D                  DC_ByteLoop:		LDN  RD				; get a byte from the font
+(2)  152/     143 : 73                  			STXD
+(2)  153/     144 : 60                  			IRX
+(2)  154/     145 : 1D                  			INC  RD
+(2)  155/     146 :                     					
+(2)  156/     146 : 9C                  			GHI  RC
+(2)  157/     147 : 3A 4F               			BNZ  DC_ByteShift
+(2)  158/     149 :                     
+(2)  159/     149 : 9B                  			GHI  RB				; mask out the first pattern
+(2)  160/     14A : F2                  			AND
+(2)  161/     14B : 73                  			STXD
+(2)  162/     14C : 60                  			IRX
+(2)  163/     14D : 30 59               			BR   DC_ByteWrite
+(2)  164/     14F :                     
+(2)  165/     14F : 9B                  DC_ByteShift:		GHI  RB				; shift the second pattern
+(2)  166/     150 : AB                  			PLO  RB
+(2)  167/     151 : F0                  DC_ShiftLoop:		LDX
+(2)  168/     152 : FE                  			SHL
+(2)  169/     153 : 73                  			STXD
+(2)  170/     154 : 60                  			IRX
+(2)  171/     155 : 2B                  			DEC  RB
+(2)  172/     156 : 8B                  			GLO  RB
+(2)  173/     157 : 3A 51               			BNZ  DC_ShiftLoop
+(2)  174/     159 :                     
+(2)  175/     159 : F0                  DC_ByteWrite:		LDX				; write the byte
+(2)  176/     15A : 5F                  			STR  RF
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Text1861.asm) - Page 16 - 8/28/2020 13:38:20
+
+
+(2)  177/     15B : 1F                  			INC  RF
+(2)  178/     15C :                     
+(2)  179/     15C : 2C                  			DEC  RC				; continue until all bytes of the pattern are done
+(2)  180/     15D : 8C                  			GLO  RC
+(2)  181/     15E : 3A 42               			BNZ  DC_ByteLoop
+(2)  182/     160 :                     
+(2)  183/     160 : F8 00               			LDI  lo(CharacterPattern)	; restore RF to the beginning of the pattern
+(2)  184/     162 : AF                  			PLO  RF
+(2)  185/     163 : F8 05               			LDI  05H			; set the length of the pattern
+(2)  186/     165 : AD                  			PLO  RD
+(2)  187/     166 : (MACRO)             			CALL DrawSprite			; call sprite routine to draw  			
+(2)  187/     166 : D4                          SEP R4
+(2)  187/     167 : 00 7A                       dw  DRAWSPRITE
+(2)  188/     169 :                     
+(2)  189/     169 : 60                  			IRX				; clean up and exit
+(2)  190/     16A : F0                  			LDX
+(2)  191/     16B : AF                  			PLO  RF
+(2)  192/     16C : (MACRO)             			RETURN
+(2)  192/     16C : D5                          SEP R5
+(2)  193/     16D :                     
+(2)  194/     16D :                     ;------------------------------------------------------------------------------------------
+(2)  195/     16D : [12]                		ENDIF
+(1)  123/     16D :                     				INCLUDE "Fonts.asm"
+(2)    1/     16D :                     
+(2)    2/     16D :                     ; *********************************************************************************************
+(2)    3/     16D :                     ; Copyright (c) 2020 
+(2)    4/     16D :                     ; by Richard Dienstknecht
+(2)    5/     16D :                     ;
+(2)    6/     16D :                     ; Changes:
+(2)    7/     16D :                     ; Gaston Williams, July, 2020 - Put Font definations into separate file 
+(2)    8/     16D :                     ; Gaston Williams, August, 2020 - Changed DEL to 1 pixel wide space
+(2)    9/     16D :                     ;
+(2)   10/     16D :                     ; Font definition
+(2)   11/     16D :                     ;
+(2)   12/     16D :                     ; The font has 96 printable characters, and requires 288 bytes of memory.
+(2)   13/     16D :                     ;
+(2)   14/     16D :                     ; The characters are encoded in standard ASCII, beginning with 20H and ending at 7FH. Each
+(2)   15/     16D :                     ; character has a height of 5 pixels and a variable width of 1 - 5 pixels. 
+(2)   16/     16D :                     ;
+(2)   17/     16D :                     ; In order to save memory, the patterns of two characters have been combined into one. Without
+(2)   18/     16D :                     ; this, the complete 96 character font would have required 480 bytes. The 'left' character
+(2)   19/     16D :                     ; stands for the lower even ASCII code, the 'right' one for the following
+(2)   20/     16D :                     ; uneven ASCII code. The DrawCharacter subroutine will either mask the left character or
+(2)   21/     16D :                     ; shift the right one over to the position of the left one when a character is drawn.
+(2)   22/     16D :                     ;
+(2)   23/     16D :                     ; Each line defines two characters of variable width, together no more than 8 pixels. The
+(2)   24/     16D :                     ; first byte contains the width of each character. The upper four bits hold the width of
+(2)   25/     16D :                     ; the left character in the pattern, the lower four bits hold the width of the right character.
+(2)   26/     16D :                     ;
+(2)   27/     16D :                     ; The following five bytes contain the bit patterns of the characters. Beginning at the left
+(2)   28/     16D :                     ; (most significant) bit, the pattern of the left character (up to its specified width) is 
+(2)   29/     16D :                     ; immediately followed by the bits of the right character. Any remaining bits to the right 
+(2)   30/     16D :                     ; (if both characters together are less than 8 pixels wide) must be set to 0. 
+(2)   31/     16D :                     ; **********************************************************************************************
+(2)   32/     16D :                     
+(2)   33/     16D : 11 40 40 40 00 40   Font:	        db  0011H, 0040H, 0040H, 0040H, 0000H, 0040H		; space and !
+(2)   34/     173 : 35 AA BF 0A 1F 0A   		db  0035H, 00AAH, 00BFH, 000AH, 001FH, 000AH		; " and #
+(2)   35/     179 : 33 74 C4 48 70 D4   		db  0033H, 0074H, 00C4H, 0048H, 0070H, 00D4H		; $ and %
+(2)   36/     17F : 41 48 A8 40 A0 D0   		db  0041H, 0048H, 00A8H, 0040H, 00A0H, 00D0H		; & and '
+(2)   37/     185 : 22 60 90 90 90 60   		db  0022H, 0060H, 0090H, 0090H, 0090H, 0060H		; ( and )
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Fonts.asm) - Page 17 - 8/28/2020 13:38:20
+
+
+(2)   38/     18B : 33 00 A8 5C A8 00   		db  0033H, 0000H, 00A8H, 005CH, 00A8H, 0000H		; * and +
+(2)   39/     191 : 22 00 00 30 40 80   		db  0022H, 0000H, 0000H, 0030H, 0040H, 0080H		; , and -
+(2)   40/     197 : 13 10 10 20 40 C0   		db  0013H, 0010H, 0010H, 0020H, 0040H, 00C0H		; . and /
+(2)   41/     19D : 33 48 B8 A8 A8 5C   		db  0033H, 0048H, 00B8H, 00A8H, 00A8H, 005CH		; 0 and 1
+(2)   42/     1A3 : 33 D8 24 48 84 F8   		db  0033H, 00D8H, 0024H, 0048H, 0084H, 00F8H		; 2 and 3
+(2)   43/     1A9 : 33 3C B0 F8 24 38   		db  0033H, 003CH, 00B0H, 00F8H, 0024H, 0038H		; 4 and 5
+(2)   44/     1AF : 33 5C 84 C4 A8 48   		db  0033H, 005CH, 0084H, 00C4H, 00A8H, 0048H		; 6 and 7		
+(2)   45/     1B5 : 33 48 B4 4C A4 48   		db  0033H, 0048H, 00B4H, 004CH, 00A4H, 0048H		; 8 and 9
+(2)   46/     1BB : 12 00 20 80 20 C0   		db  0012H, 0000H, 0020H, 0080H, 0020H, 00C0H		; : and ;		
+(2)   47/     1C1 : 32 20 58 80 58 20   		db  0032H, 0020H, 0058H, 0080H, 0058H, 0020H		; < and =
+(2)   48/     1C7 : 33 88 54 24 48 88   		db  0033H, 0088H, 0054H, 0024H, 0048H, 0088H		; > and ?
+(2)   49/     1CD : 33 48 F4 9C B4 54   		db  0033H, 0048H, 00F4H, 009CH, 00B4H, 0054H		; @ and A
+(2)   50/     1D3 : 33 CC B0 D0 B0 CC   		db  0033H, 00CCH, 00B0H, 00D0H, 00B0H, 00CCH		; B and C
+(2)   51/     1D9 : 33 DC B0 B8 B0 DC   		db  0033H, 00DCH, 00B0H, 00B8H, 00B0H, 00DCH		; D and E
+(2)   52/     1DF : 33 EC 90 D0 94 8C   		db  0033H, 00ECH, 0090H, 00D0H, 0094H, 008CH		; F and G
+(2)   53/     1E5 : 33 BC A8 E8 A8 BC   		db  0033H, 00BCH, 00A8H, 00E8H, 00A8H, 00BCH		; H and I
+(2)   54/     1EB : 33 34 34 38 B4 54   		db  0033H, 0034H, 0034H, 0038H, 00B4H, 0054H		; J and K
+(2)   55/     1F1 : 35 91 9B 95 91 F1   		db  0035H, 0091H, 009BH, 0095H, 0091H, 00F1H		; L and M
+(2)   56/     1F7 : 43 9E DA BA 9A 9E   		db  0043H, 009EH, 00DAH, 00BAH, 009AH, 009EH		; N and O
+(2)   57/     1FD : 34 DE B2 D2 96 9E   		db  0034H, 00DEH, 00B2H, 00D2H, 0096H, 009EH		; P and Q
+(2)   58/     203 : 33 CC B0 C8 A4 B8   		db  0033H, 00CCH, 00B0H, 00C8H, 00A4H, 00B8H		; R and S
+(2)   59/     209 : 33 F4 54 54 54 5C   		db  0033H, 00F4H, 0054H, 0054H, 0054H, 005CH		; T and U
+(2)   60/     20F : 35 B1 B1 B1 B5 4A   		db  0035H, 00B1H, 00B1H, 00B1H, 00B5H, 004AH		; V and W
+(2)   61/     215 : 33 B4 B4 48 A8 A8   		db  0033H, 00B4H, 00B4H, 0048H, 00A8H, 00A8H		; X and Y
+(2)   62/     21B : 32 F8 30 50 90 F8   		db  0032H, 00F8H, 0030H, 0050H, 0090H, 00F8H		; Z and [
+(2)   63/     221 : 32 98 88 48 28 38   		db  0032H, 0098H, 0088H, 0048H, 0028H, 0038H		; \ and ]
+(2)   64/     227 : 33 40 A0 00 00 1C   		db  0033H, 0040H, 00A0H, 0000H, 0000H, 001CH		; ^ and _
+(2)   65/     22D : 23 40 98 28 28 18   		db  0023H, 0040H, 0098H, 0028H, 0028H, 0018H		; ' and a
+(2)   66/     233 : 33 80 CC B0 B0 CC   		db  0033H, 0080H, 00CCH, 00B0H, 00B0H, 00CCH		; b and c
+(2)   67/     239 : 33 20 6C B4 B8 6C   		db  0033H, 0020H, 006CH, 00B4H, 00B8H, 006CH		; d and e
+(2)   68/     23F : 23 58 A8 F0 88 B0   		db  0023H, 0058H, 00A8H, 00F0H, 0088H, 00B0H		; f and g
+(2)   69/     245 : 31 90 80 D0 B0 B0   		db  0031H, 0090H, 0080H, 00D0H, 00B0H, 00B0H		; h and i
+(2)   70/     24B : 23 60 28 70 68 A8   		db  0023H, 0060H, 0028H, 0070H, 0068H, 00A8H		; j and k
+(2)   71/     251 : 25 80 94 AA AA 6A   		db  0025H, 0080H, 0094H, 00AAH, 00AAH, 006AH		; l and m
+(2)   72/     257 : 33 00 C8 B4 B4 A8   		db  0033H, 0000H, 00C8H, 00B4H, 00B4H, 00A8H		; n and o
+(2)   73/     25D : 33 00 CC B4 CC 84   		db  0033H, 0000H, 00CCH, 00B4H, 00CCH, 0084H		; p and q
+(2)   74/     263 : 23 00 58 B0 88 B0   		db  0023H, 0000H, 0058H, 00B0H, 0088H, 00B0H		; r and s
+(2)   75/     269 : 23 80 E8 A8 A8 58   		db  0023H, 0080H, 00E8H, 00A8H, 00A8H, 0058H		; t and u
+(2)   76/     26F : 35 00 B1 B5 B5 4A   		db  0035H, 0000H, 00B1H, 00B5H, 00B5H, 004AH		; v and w
+(2)   77/     275 : 33 00 B4 4C 44 A8   		db  0033H, 0000H, 00B4H, 004CH, 0044H, 00A8H		; x and y
+(2)   78/     27B : 33 0C E8 30 48 EC   		db  0033H, 000CH, 00E8H, 0030H, 0048H, 00ECH		; z and {
+(2)   79/     281 : 13 E0 A0 90 A0 E0   		db  0013H, 00E0H, 00A0H, 0090H, 00A0H, 00E0H		; | and }
+(2)   80/     287 : 41 00 50 A0 00 00   		db  0041H, 0000H, 0050H, 00A0H, 0000H, 0000H		; ~ and DEL
+(2)   81/     28D :                     ;------------------------------------------------------------------------------------------
+(1)  124/     28D :                     				INCLUDE "Tty1861.asm"
+(2)    1/     28D :                     ; *******************************************************************************************
+(2)    2/     28D :                     ; Tty1861 - Teletype Terminal functions
+(2)    3/     28D :                     ; Copyright (c) 2020 by Gaston Williams
+(2)    4/     28D :                     ;
+(2)    5/     28D :                     ; These functions implement basic terminal functions in 64x64 bit graphics.
+(2)    6/     28D :                     
+(2)    7/     28D :                     ; Notes: 
+(2)    8/     28D :                     ; 	1. Functions named with "Get" or "Put" are safe functions that check before updating
+(2)    9/     28D :                     ;	and those named with "Read" or "Write" may not be safe, and the caller is responsible
+(2)   10/     28D :                     ;	for checking to see if it's safe before calling them update the video data.
+(2)   11/     28D :                     ;
+(2)   12/     28D :                     ;	2. BeginTerminal should be called before any video, and the VideoOn and VideoOff 
+(2)   13/     28D :                     ;	functions should be used to turn the 1861 on and off.
+(2)   14/     28D :                     ;
+(2)   15/     28D :                     ;	3. The WaitForSafeUpdate function can be used to check for the end of Video DMA 
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Tty1861.asm) - Page 18 - 8/28/2020 13:38:20
+
+
+(2)   16/     28D :                     ;	when it is safe to update video data.
+(2)   17/     28D :                     ; *******************************************************************************************
+(2)   18/     28D :                     
+(2)   19/     28D : =>TRUE              			IF UseTty == "TRUE"
+(2)   20/     28D :                     				
+(2)   21/     28D :                     ; =========================================================================================
+(2)   22/     28D :                     ; Initialize system variables for TTY Terminal
+(2)   23/     28D :                     ;
+(2)   24/     28D :                     ; Note: *** MANDATORY *** This function must be called before any other Terminal functions
+(2)   25/     28D :                     ;
+(2)   26/     28D :                     ; Internal:
+(2)   27/     28D :                     ; RF.0		Value to set Video Flag false
+(2)   28/     28D :                     ; =========================================================================================
+(2)   29/     28D :                     
+(2)   30/     28D : E2                  BeginTerminal:		SEX  R2			; make sure X points to stack pointer
+(2)   31/     28E :                     			
+(2)   32/     28E : F8 00               			LDI  00H		; set the video flag to false
+(2)   33/     290 : AF                  			PLO  RF						
+(2)   34/     291 : (MACRO)             			CALL SetVideoFlag
+(2)   34/     291 : D4                          SEP R4
+(2)   34/     292 : 02 E6                       dw  SETVIDEOFLAG
+(2)   35/     294 :                     						
+(2)   36/     294 : (MACRO)             			CALL ClearScreen	; set cursor to home
+(2)   36/     294 : D4                          SEP R4
+(2)   36/     295 : 03 D8                       dw  CLEARSCREEN
+(2)   37/     297 :                     			
+(2)   38/     297 : =>FALSE             		IF BackBuffer <> "OFF"
+(2)   39/     297 :                     			CALL CopyBackBuffer	; clear second video buffer
+(2)   40/     297 : [38]                		ENDIF
+(2)   41/     297 :                     
+(2)   42/     297 :                     							
+(2)   43/     297 : (MACRO)             			RETURN			
+(2)   43/     297 : D5                          SEP R5
+(2)   44/     298 :                     ;------------------------------------------------------------------------------------------
+(2)   45/     298 :                     
+(2)   46/     298 :                     ; =========================================================================================
+(2)   47/     298 :                     ; VideoOn - Turn pixie video on and set the flag
+(2)   48/     298 :                     ;
+(2)   49/     298 :                     ; Note: *** MANDATORY *** This function must be used to turn the video on
+(2)   50/     298 :                     ;
+(2)   51/     298 :                     ; Internal:
+(2)   52/     298 :                     ; RF.0		Value to set Video Flag true
+(2)   53/     298 :                     ; =========================================================================================
+(2)   54/     298 :                     
+(2)   55/     298 : 69                  VideoOn:		INP 1			; turn 1861 video on
+(2)   56/     299 :                     						
+(2)   57/     299 : F8 FF               			LDI  00FFH		; set video flag to true (-1)
+(2)   58/     29B : AF                  			PLO  RF
+(2)   59/     29C : (MACRO)             			CALL SetVideoFlag	
+(2)   59/     29C : D4                          SEP R4
+(2)   59/     29D : 02 E6                       dw  SETVIDEOFLAG
+(2)   60/     29F :                     		
+(2)   61/     29F : (MACRO)             			RETURN
+(2)   61/     29F : D5                          SEP R5
+(2)   62/     2A0 :                     ;------------------------------------------------------------------------------------------
+(2)   63/     2A0 :                     
+(2)   64/     2A0 :                     ; =========================================================================================
+(2)   65/     2A0 :                     ; VideoOff - Turn pixie video off and clear the flag
+(2)   66/     2A0 :                     ;
+(2)   67/     2A0 :                     ; Note: *** MANDATORY *** This function must be used to turn the video off
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Tty1861.asm) - Page 19 - 8/28/2020 13:38:20
+
+
+(2)   68/     2A0 :                     ;
+(2)   69/     2A0 :                     ; Internal:
+(2)   70/     2A0 :                     ; RD		Pointer to video flag
+(2)   71/     2A0 :                     ; =========================================================================================
+(2)   72/     2A0 :                     
+(2)   73/     2A0 : 61                  VideoOff:		OUT 1			; turn 1861 video off
+(2)   74/     2A1 :                     
+(2)   75/     2A1 : 22                  			DEC  R2			; The output instruction increments stack
+(2)   76/     2A2 :                     						; pointer, so back up the stack pointer to
+(2)   77/     2A2 :                     						; point to its previous location.
+(2)   78/     2A2 :                     						
+(2)   79/     2A2 : F8 00               			LDI  00H		; set the video flag to false
+(2)   80/     2A4 : AF                  			PLO  RF						
+(2)   81/     2A5 : (MACRO)             			CALL SetVideoFlag
+(2)   81/     2A5 : D4                          SEP R4
+(2)   81/     2A6 : 02 E6                       dw  SETVIDEOFLAG
+(2)   82/     2A8 :                     		
+(2)   83/     2A8 : (MACRO)             			RETURN
+(2)   83/     2A8 : D5                          SEP R5
+(2)   84/     2A9 :                     ;------------------------------------------------------------------------------------------
+(2)   85/     2A9 :                     
+(2)   86/     2A9 :                     ; =========================================================================================
+(2)   87/     2A9 :                     ; WaitForSafeUpdate -
+(2)   88/     2A9 :                     ;		Check the 1861 video status and wait for DMA to complete before returning.
+(2)   89/     2A9 :                     ;		When this function returns it is safe to make updates to the video.
+(2)   90/     2A9 :                     ;		There will be time for about 8000 instruction cycles (at 2MHz) before the
+(2)   91/     2A9 :                     ;		next DMA to occur.  All Get/Put video functions call this function before
+(2)   92/     2A9 :                     ;		making any changes.  This logic is based on code found in Tom Pittman's, 
+(2)   93/     2A9 :                     ;		Short Course In Programming, Chapter 7, Interrupts and DMA.
+(2)   94/     2A9 :                     ;		
+(2)   95/     2A9 :                     ;		Before DMA begins, EF1 is asserted for 28 instruction cycles, and before
+(2)   96/     2A9 :                     ;		DMA ends EF1 is asserted for only 12 instruction cycles.  This code counts
+(2)   97/     2A9 :                     ;		cycles while EF1 is asserted to determine when DMA has ended.
+(2)   98/     2A9 :                     ;
+(2)   99/     2A9 :                     ; Note: *REQUIRED* to guarantee safety before accessing video data. 
+(2)  100/     2A9 :                     ;		Must call this function before calling any UNSAFE function.
+(2)  101/     2A9 :                     ;
+(2)  102/     2A9 :                     ; Internal:
+(2)  103/     2A9 :                     ; RD 		Pointer to video flag
+(2)  104/     2A9 :                     ; =========================================================================================
+(2)  105/     2A9 :                     
+(2)  106/     2A9 : (MACRO)             WaitForSafeUpdate: 	LOAD RD, VideoFlag	; set pointer to video flag						
+(2)  106/     2A9 : F8 07                       LDI  lo(VIDEOFLAG)
+(2)  106/     2AB : AD                          PLO  RD
+(2)  106/     2AC : F8 7F                       LDI  hi(VIDEOFLAG)
+(2)  106/     2AE : BD                          PHI  RD     
+(2)  107/     2AF : 0D                  			LDN  RD			; check video flag so we don't wait forever
+(2)  108/     2B0 : 32 BF               			BZ   WFSU_Exit		; for an EF1 signal that never occurs.
+(2)  109/     2B2 :                     						; Any updates are fine when video is off
+(2)  110/     2B2 :                     			
+(2)  111/     2B2 :                     
+(2)  112/     2B2 : 34 B2               WFSU_Check_DMA:		B1   WFSU_Check_DMA	; wait for first EF1 siginal
+(2)  113/     2B4 :                     		
+(2)  114/     2B4 : F8 14               WFSU_Sync:		LDI  14H		; 20 instruction cycles
+(2)  115/     2B6 :                     
+(2)  116/     2B6 : 3C B6               WFSU_New_EF1:		BN1  WFSU_New_EF1	; wait for next EF1 signal to start count
+(2)  117/     2B8 :                     
+(2)  118/     2B8 : FF 02               WFSU_Count:		SMI  02			; count down by 2 and keep counting for 12
+(2)  119/     2BA : 34 B8               			B1   WFSU_Count		; (DMA end) or 28 (DMA begin) instructions
+(2)  120/     2BC :                     			
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Tty1861.asm) - Page 20 - 8/28/2020 13:38:20
+
+
+(2)  121/     2BC : FE                  			SHL			; check sign bit to see if negative (20-28)
+(2)  122/     2BD : 33 B4               			BDF  WFSU_Sync		; at DMA begin. DF = 1, means DMA begin
+(2)  123/     2BF :                     						; and we must wait for the DMA end
+(2)  124/     2BF :                     
+(2)  125/     2BF : (MACRO)             WFSU_Exit:		RETURN			; return now that DMA has ended
+(2)  125/     2BF : D5                          SEP R5
+(2)  126/     2C0 :                     ;------------------------------------------------------------------------------------------			
+(2)  127/     2C0 :                     
+(2)  128/     2C0 :                     ; =========================================================================================
+(2)  129/     2C0 :                     ; Create a pointer into a Video buffer at the location specified by Y location
+(2)  130/     2C0 :                     ;
+(2)  131/     2C0 :                     ; Note: *Internal* - Used to manipulator pointer into video buffer
+(2)  132/     2C0 :                     ;
+(2)  133/     2C0 :                     ; Parameters:
+(2)  134/     2C0 :                     ; RE.0		X coordinate of the character
+(2)  135/     2C0 :                     ; RE.1		Y coordinate of the character
+(2)  136/     2C0 :                     ;
+(2)  137/     2C0 :                     ; Internal:
+(2)  138/     2C0 :                     ; R7.0          Swap Pointer for video buffers
+(2)  139/     2C0 :                     ;
+(2)  140/     2C0 :                     ; Return:
+(2)  141/     2C0 :                     ; RF		Pointer to video buffer with Y Offset
+(2)  142/     2C0 :                     ; =========================================================================================
+(2)  143/     2C0 :                     
+(2)  144/     2C0 : =>TRUE              VideoOffsetY:		IF BackBuffer == "OFF"
+(2)  145/     2C0 : F8 7E               				LDI  hi(DisplayBuffer)	; prepare the pointer to the video buffer
+(2)  146/     2C2 : BF                  				PHI  RF
+(2)  147/     2C3 : [144]               			ENDIF
+(2)  148/     2C3 :                     
+(2)  149/     2C3 : =>FALSE             			IF BackBuffer == "COPY"
+(2)  150/     2C3 :                     				LDI  hi(DoubleBuffer)	; prepare the pointer to the back buffer
+(2)  151/     2C3 :                     				PHI  RF
+(2)  152/     2C3 : [149]               			ENDIF
+(2)  153/     2C3 :                     
+(2)  154/     2C3 : =>FALSE             			IF BackBuffer == "SWAP"
+(2)  155/     2C3 :                     				GLO  R7			; prepare pointer to the current back buffer
+(2)  156/     2C3 :                     				PHI  RF
+(2)  157/     2C3 : [154]               			ENDIF					
+(2)  158/     2C3 :                     			
+(2)  159/     2C3 : 9E                  				GHI  RE			; get the y position into video buffer				
+(2)  160/     2C4 :                     				
+(2)  161/     2C4 : =>TRUE              			IF Resolution == "64x32"
+(2)  162/     2C4 : FA 1F               				ANI  1FH		; between 0 - 31
+(2)  163/     2C6 : [161]               			ENDIF
+(2)  164/     2C6 :                     								
+(2)  165/     2C6 : =>FALSE             			IF Resolution == "64x64"
+(2)  166/     2C6 :                     				ANI  3FH		; or 0 - 63
+(2)  167/     2C6 : [165]               			ENDIF
+(2)  168/     2C6 : FE                  				SHL			; Convert Y value to position offset = (y * 8)
+(2)  169/     2C7 : FE                  				SHL			
+(2)  170/     2C8 : FE                  				SHL
+(2)  171/     2C9 : AF                  				PLO  RF
+(2)  172/     2CA : 3B D0               				BNF  VY_Done
+(2)  173/     2CC : 9F                  				GHI  RF
+(2)  174/     2CD : FC 01               				ADI  01H
+(2)  175/     2CF : BF                  				PHI  RF
+(2)  176/     2D0 :                     
+(2)  177/     2D0 : (MACRO)             VY_Done:			RETURN
+(2)  177/     2D0 : D5                          SEP R5
+(2)  178/     2D1 :                     ;------------------------------------------------------------------------------------------
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Tty1861.asm) - Page 21 - 8/28/2020 13:38:20
+
+
+(2)  179/     2D1 :                     
+(2)  180/     2D1 :                     
+(2)  181/     2D1 :                     ; =========================================================================================
+(2)  182/     2D1 :                     ; Add the X byte offset to a pointer into a Video buffer
+(2)  183/     2D1 :                     ;
+(2)  184/     2D1 :                     ; Note: *Internal* - Used to manipulator pointer into video buffer
+(2)  185/     2D1 :                     ;
+(2)  186/     2D1 :                     ; Parameters:
+(2)  187/     2D1 :                     ; RF		Pointer to video buffer with Y Offset
+(2)  188/     2D1 :                     ; RE.0		X coordinate of the character
+(2)  189/     2D1 :                     ; RE.1		Y coordinate of the character
+(2)  190/     2D1 :                     ;
+(2)  191/     2D1 :                     ; Return:
+(2)  192/     2D1 :                     ; RF		Pointer to video buffer at X,Y byte Offset
+(2)  193/     2D1 :                     ; RC.1         	X Offset byte value
+(2)  194/     2D1 :                     ; RC.0		X Offset bit value
+(2)  195/     2D1 :                     ; =========================================================================================
+(2)  196/     2D1 :                     
+(2)  197/     2D1 : 8E                  VideoOffsetX:		GLO  RE		; get the x bit position 
+(2)  198/     2D2 : FA 07               			ANI  07H	; mask off all but lowest 3 bits
+(2)  199/     2D4 : AC                  			PLO  RC		; save bit value in RC.0
+(2)  200/     2D5 :                     				
+(2)  201/     2D5 : 8E                  			GLO  RE		; get the x byte position into video buffer
+(2)  202/     2D6 : FA 3F               			ANI  3FH        ; value 0 - 63
+(2)  203/     2D8 : F6                  			SHR		; Convert x value to position offset = (x / 8)
+(2)  204/     2D9 : F6                  			SHR			
+(2)  205/     2DA : F6                  			SHR
+(2)  206/     2DB : BC                  			PHI  RC		; save byte value in RC.1
+(2)  207/     2DC :                     						
+(2)  208/     2DC :                     
+(2)  209/     2DC : 73                  			STXD		; byte position offset in M(X)
+(2)  210/     2DD : 60                  			IRX
+(2)  211/     2DE :                     				
+(2)  212/     2DE : 8F                  			GLO  RF		; advance the pointer coordinate by byte offset				
+(2)  213/     2DF : F4                  			ADD		; add the offset to pointer					
+(2)  214/     2E0 : AF                  			PLO  RF		; save lower byte
+(2)  215/     2E1 :                     			
+(2)  216/     2E1 : 9F                  			GHI  RF		; update high byte if needed			
+(2)  217/     2E2 : 7C 00               			ADCI 00H	; Add carry into high byte and save
+(2)  218/     2E4 : BF                  			PHI  RF
+(2)  219/     2E5 :                     				
+(2)  220/     2E5 : (MACRO)             			RETURN
+(2)  220/     2E5 : D5                          SEP R5
+(2)  221/     2E6 :                     ;------------------------------------------------------------------------------------------
+(2)  222/     2E6 :                     
+(2)  223/     2E6 :                     ; =========================================================================================
+(2)  224/     2E6 :                     ; SetVideoFlag - Set the video flag to false or true
+(2)  225/     2E6 :                     ;
+(2)  226/     2E6 :                     ; Note: *Internal* - Use VideoOn and VideOff to set or clear the video flag
+(2)  227/     2E6 :                     ;
+(2)  228/     2E6 :                     ; Parameters:
+(2)  229/     2E6 :                     ; RF.0		Value for flag, zero for false, non-zero for true
+(2)  230/     2E6 :                     ; Internal:
+(2)  231/     2E6 :                     ; RD		Pointer to video flag
+(2)  232/     2E6 :                     ; =========================================================================================
+(2)  233/     2E6 : (MACRO)             SetVideoFlag:		LOAD RD, VideoFlag	; set pointer to video flag							
+(2)  233/     2E6 : F8 07                       LDI  lo(VIDEOFLAG)
+(2)  233/     2E8 : AD                          PLO  RD
+(2)  233/     2E9 : F8 7F                       LDI  hi(VIDEOFLAG)
+(2)  233/     2EB : BD                          PHI  RD     
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Tty1861.asm) - Page 22 - 8/28/2020 13:38:20
+
+
+(2)  234/     2EC : 8F                  			GLO  RF			; get the value for the flag
+(2)  235/     2ED : 5D                  			STR  RD			; store the flag
+(2)  236/     2EE :                     			
+(2)  237/     2EE : (MACRO)             			RETURN
+(2)  237/     2EE : D5                          SEP R5
+(2)  238/     2EF :                     ;------------------------------------------------------------------------------------------			
+(2)  239/     2EF :                     
+(2)  240/     2EF :                     ; =========================================================================================
+(2)  241/     2EF :                     ; Clear a line of text on the video console (6 rows of pixels at 8 bytes per row) along
+(2)  242/     2EF :                     ; with the 2 rows of the next row of text.
+(2)  243/     2EF :                     ;
+(2)  244/     2EF :                     ; Note:	*** UNSAFE *** This function does not check before accessing video data.
+(2)  245/     2EF :                     ;		Must call WaitForSafeUpdate function before calling this function.
+(2)  246/     2EF :                     ;
+(2)  247/     2EF :                     ; Parameters:
+(2)  248/     2EF :                     ; RE.0		X coordinate of the character
+(2)  249/     2EF :                     ; RE.1		Y coordinate of the character
+(2)  250/     2EF :                     ;
+(2)  251/     2EF :                     ; Internal:
+(2)  252/     2EF :                     ; RF		Pointer to video buffer
+(2)  253/     2EF :                     ; RD		Counter
+(2)  254/     2EF :                     ; R7.0          Swap Pointer for video buffers
+(2)  255/     2EF :                     ; =========================================================================================
+(2)  256/     2EF :                     
+(2)  257/     2EF : (MACRO)             BlankLine:		CALL VideoOffsetY
+(2)  257/     2EF : D4                          SEP R4
+(2)  257/     2F0 : 02 C0                       dw  VIDEOOFFSETY
+(2)  258/     2F2 :                     										
+(2)  259/     2F2 :                     					
+(2)  260/     2F2 : F8 00               			LDI  00H	; load byte counter
+(2)  261/     2F4 : BD                  			PHI  RD
+(2)  262/     2F5 : AD                  			PLO  RD
+(2)  263/     2F6 :                     
+(2)  264/     2F6 : F8 00               BL_Loop:		LDI  00H
+(2)  265/     2F8 : 5F                  			STR  RF
+(2)  266/     2F9 : 1F                  			INC  RF
+(2)  267/     2FA : 1D                  			INC  RD
+(2)  268/     2FB :                     					
+(2)  269/     2FB : 8D                  			GLO  RD
+(2)  270/     2FC :                     			
+(2)  271/     2FC : FD 40               			SDI  40H	;do 64 times (6 rows of pixels x 8 bytes per row					
+(2)  272/     2FE :                     					; + 2 rows to overwrite existing text on line below.)				
+(2)  273/     2FE : CA 02 F6            			LBNZ BL_Loop	
+(2)  274/     301 :                     					
+(2)  275/     301 : (MACRO)             			RETURN
+(2)  275/     301 : D5                          SEP R5
+(2)  276/     302 :                     ;------------------------------------------------------------------------------------------
+(2)  277/     302 :                     
+(2)  278/     302 :                     ; =========================================================================================
+(2)  279/     302 :                     ; Advance cursor to next tab stop: 08H, 10H, 18H, 20H, 28H, 30H, 38H, 00H (NextLine)
+(2)  280/     302 :                     ;
+(2)  281/     302 :                     ; Note: Safe - This function does not access video data
+(2)  282/     302 :                     ;
+(2)  283/     302 :                     ; Parameters:
+(2)  284/     302 :                     ; RE.0		X coordinate of the character
+(2)  285/     302 :                     ; RE.1		Y coordinate of the character
+(2)  286/     302 :                     ;
+(2)  287/     302 :                     ;
+(2)  288/     302 :                     ; Return:
+(2)  289/     302 :                     ; RE.0		Updated X coordinate
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Tty1861.asm) - Page 23 - 8/28/2020 13:38:20
+
+
+(2)  290/     302 :                     ; RE.1		Updated Y coordinate
+(2)  291/     302 :                     ; =========================================================================================
+(2)  292/     302 :                     
+(2)  293/     302 : 8E                  TabCursor:		GLO  RE			; get cursorX value
+(2)  294/     303 : FC 08               			ADI  08H		; advance 8 pixels, 2 avg char widths
+(2)  295/     305 : FA 78               			ANI  78H		; mask off lower 3 bits (truncate to 8)
+(2)  296/     307 : AE                  			PLO  RE			; set the x cursor to begining of line (zero) 
+(2)  297/     308 :                     
+(2)  298/     308 : FD 38               			SDI  38H		; check to see if we went past last tab stop
+(2)  299/     30A : 33 0F               			BGE  TAB_Exit		; If not, we're done
+(2)  300/     30C :                     			
+(2)  301/     30C : (MACRO)             			CALL NextLine		; If we went over go to next line
+(2)  301/     30C : D4                          SEP R4
+(2)  301/     30D : 03 2D                       dw  NEXTLINE
+(2)  302/     30F :                     			
+(2)  303/     30F :                     								
+(2)  304/     30F : (MACRO)             TAB_Exit:		RETURN
+(2)  304/     30F : D5                          SEP R5
+(2)  305/     310 :                     ;------------------------------------------------------------------------------------------
+(2)  306/     310 :                     ; =========================================================================================
+(2)  307/     310 :                     ; Move cursor back one position and delete the character
+(2)  308/     310 :                     ;
+(2)  309/     310 :                     ; Note:	*** UNSAFE *** This function does not check before accessing video data.
+(2)  310/     310 :                     ;		Must call WaitForSafeUpdate function before calling this function.
+(2)  311/     310 :                     
+(2)  312/     310 :                     ;
+(2)  313/     310 :                     ; Parameters:
+(2)  314/     310 :                     ; RE.0		X coordinate of the character
+(2)  315/     310 :                     ; RE.1		Y coordinate of the character
+(2)  316/     310 :                     ; 
+(2)  317/     310 :                     ; Internals:
+(2)  318/     310 :                     ; RF.0		Width of average character to back up
+(2)  319/     310 :                     ;
+(2)  320/     310 :                     ; Return:
+(2)  321/     310 :                     ; RE.0		Updated X coordinate
+(2)  322/     310 :                     ; RE.1		Updated Y coordinate
+(2)  323/     310 :                     ; =========================================================================================
+(2)  324/     310 :                     
+(2)  325/     310 : F8 04               Backspace:		LDI  04H		; average charcter width = 4 pixels
+(2)  326/     312 : AF                  			PLO  RF			; RD.0 has width to back pu
+(2)  327/     313 : (MACRO)             			CALL LeftCursor		; Move cursor back one character		
+(2)  327/     313 : D4                          SEP R4
+(2)  327/     314 : 03 80                       dw  LEFTCURSOR
+(2)  328/     316 :                     			
+(2)  329/     316 : (MACRO)             			CALL BlankCharacter	; erase the previous character	
+(2)  329/     316 : D4                          SEP R4
+(2)  329/     317 : 03 4B                       dw  BLANKCHARACTER
+(2)  330/     319 :                     								
+(2)  331/     319 : (MACRO)             			RETURN
+(2)  331/     319 : D5                          SEP R5
+(2)  332/     31A :                     ;------------------------------------------------------------------------------------------
+(2)  333/     31A :                     
+(2)  334/     31A :                     
+(2)  335/     31A :                     ; =========================================================================================
+(2)  336/     31A :                     ; Create mask for blanking character bits in video buffer
+(2)  337/     31A :                     ;
+(2)  338/     31A :                     ; Note: *Internal* - Used for removing character pixels
+(2)  339/     31A :                     ;
+(2)  340/     31A :                     ; Parameters:
+(2)  341/     31A :                     ; RE.0		X coordinate of the character
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Tty1861.asm) - Page 24 - 8/28/2020 13:38:20
+
+
+(2)  342/     31A :                     ; RE.1		Y coordinate of the character
+(2)  343/     31A :                     ; RC.0		X Offset bit value
+(2)  344/     31A :                     ; RC.1         	X Offset byte value
+(2)  345/     31A :                     ;
+(2)  346/     31A :                     ; Internals:
+(2)  347/     31A :                     ; RD.0          Counter for calculating Mask
+(2)  348/     31A :                     ;
+(2)  349/     31A :                     ; Returns:
+(2)  350/     31A :                     ; RD.1		Mask for video bit values X byte
+(2)  351/     31A :                     ; =========================================================================================
+(2)  352/     31A : F8 FF               CreateMask:		LDI  00FFH		; load bit mask
+(2)  353/     31C : BD                  			PHI  RD		
+(2)  354/     31D : 8C                  			GLO  RC			; put the X offset bit value in counter
+(2)  355/     31E : AD                  			PLO  RD			 
+(2)  356/     31F :                     			
+(2)  357/     31F : 32 28               CM_Test:		BZ   CM_Done		; keep going to counter exhausted
+(2)  358/     321 : 9D                  			GHI  RD			; get the mask byte
+(2)  359/     322 : F6                  			SHR			; shift once for each bit offset
+(2)  360/     323 : BD                  			PHI  RD			; save mask value
+(2)  361/     324 : 2D                  			DEC  RD			; decrement counter
+(2)  362/     325 : 8D                  			GLO  RD			; test byte for zero
+(2)  363/     326 : 30 1F               			BR   CM_Test
+(2)  364/     328 :                     			
+(2)  365/     328 : 9D                  CM_Done:		GHI  RD			; get mask value
+(2)  366/     329 : FB FF               			XRI  00FFH		; invert all the bits for ANDing
+(2)  367/     32B : BD                  			PHI  RD			; put bit mask back in RD.1
+(2)  368/     32C :                     
+(2)  369/     32C :                     
+(2)  370/     32C : (MACRO)             			RETURN
+(2)  370/     32C : D5                          SEP R5
+(2)  371/     32D :                     ;------------------------------------------------------------------------------------------
+(2)  372/     32D :                     
+(2)  373/     32D :                     
+(2)  374/     32D :                     ; =========================================================================================
+(2)  375/     32D :                     ; Advance cursor to begining of the next line. 
+(2)  376/     32D :                     ;
+(2)  377/     32D :                     ; Note: Safe - This function does not access video data
+(2)  378/     32D :                     ;
+(2)  379/     32D :                     ; Parameters:
+(2)  380/     32D :                     ; RE.0		X coordinate of the character
+(2)  381/     32D :                     ; RE.1		Y coordinate of the character
+(2)  382/     32D :                     ;
+(2)  383/     32D :                     ;
+(2)  384/     32D :                     ; Return:
+(2)  385/     32D :                     ; RE.0		Updated X coordinate
+(2)  386/     32D :                     ; RE.1		Updated Y coordinate
+(2)  387/     32D :                     ; =========================================================================================
+(2)  388/     32D :                     
+(2)  389/     32D : F8 00               NextLine:		LDI  00H		; load zero and save as cursorX
+(2)  390/     32F : AE                  			PLO  RE			; set the x cursor to begining of line (zero) 
+(2)  391/     330 :                     
+(2)  392/     330 : 9E                  			GHI  RE			; advance y cursor to point to next line									
+(2)  393/     331 : FC 06               			ADI  06H                ; each line is 6 pixels high
+(2)  394/     333 : BE                  			PHI  RE			; update cursorY 
+(2)  395/     334 :                     			
+(2)  396/     334 : =>FALSE             		IF Resolution == "64x64"	
+(2)  397/     334 :                     			SDI  3CH		; check to see if we are past the end
+(2)  398/     334 :                     			BGE NL_Exit             ; DF = 1 means haven't gone past 60 y pixels				
+(2)  399/     334 :                     			LDI  02H		; go back to top line
+(2)  400/     334 :                     			PHI  RE			; update cursorY		
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Tty1861.asm) - Page 25 - 8/28/2020 13:38:20
+
+
+(2)  401/     334 : [396]               		ENDIF
+(2)  402/     334 :                     			
+(2)  403/     334 : =>TRUE              		IF Resolution == "64x32" 	
+(2)  404/     334 : FD 1E               			SDI  1EH		; check to see if we are past the end
+(2)  405/     336 : 33 3B               			BGE NL_Exit             ; DF = 1 means haven't gone past 30 y pixels				
+(2)  406/     338 : F8 01               			LDI  01H		; go back to top line
+(2)  407/     33A : BE                  			PHI  RE			; update cursorY
+(2)  408/     33B : [403]               		ENDIF
+(2)  409/     33B :                     								
+(2)  410/     33B : (MACRO)             NL_Exit:		RETURN
+(2)  410/     33B : D5                          SEP R5
+(2)  411/     33C :                     ;------------------------------------------------------------------------------------------
+(2)  412/     33C :                     
+(2)  413/     33C :                     ; =========================================================================================
+(2)  414/     33C :                     ; Advance cursor down to next line without changing x location
+(2)  415/     33C :                     ;
+(2)  416/     33C :                     ; Note:	*** UNSAFE *** This function does not check before accessing video data.
+(2)  417/     33C :                     ;		Must call WaitForSafeUpdate function before calling this function.
+(2)  418/     33C :                     ;
+(2)  419/     33C :                     ; Parameters:
+(2)  420/     33C :                     ; RE.0		X coordinate of the character
+(2)  421/     33C :                     ; RE.1		Y coordinate of the character
+(2)  422/     33C :                     ;
+(2)  423/     33C :                     ;
+(2)  424/     33C :                     ; Return:
+(2)  425/     33C :                     ; RE.0		Updated X coordinate
+(2)  426/     33C :                     ; RE.1		Updated Y coordinate
+(2)  427/     33C :                     ; =========================================================================================
+(2)  428/     33C :                     
+(2)  429/     33C : 9E                  DownCursor:		GHI  RE			; move y by 6 pixels
+(2)  430/     33D : FC 06               			ADI  06H
+(2)  431/     33F : BE                  			PHI  RE			; save y
+(2)  432/     340 :                     			
+(2)  433/     340 : =>FALSE             		IF Resolution == "64x64"											
+(2)  434/     340 :                     			SDI  3CH		; check y value to see if we went past 60
+(2)  435/     340 :                     			BGE  DC_Blank		; if not, erase the next line
+(2)  436/     340 :                     			
+(2)  437/     340 :                     			LDI  02H		; if so, move back to first line at top of console
+(2)  438/     340 :                     			PHI  RE			; save y
+(2)  439/     340 : [433]               		ENDIF
+(2)  440/     340 :                     			
+(2)  441/     340 : =>TRUE              		IF Resolution == "64x32"	
+(2)  442/     340 : FD 1E               			SDI  1EH		; check y value to see if we went past 30
+(2)  443/     342 : 33 47               			BGE  DC_Blank		; if not, erase the next line
+(2)  444/     344 :                     			
+(2)  445/     344 : F8 01               			LDI  01H		; if so, move back to first line at top of console
+(2)  446/     346 : BE                  			PHI  RE			; save y	
+(2)  447/     347 : [441]               		ENDIF
+(2)  448/     347 :                     			
+(2)  449/     347 : (MACRO)             DC_Blank:		CALL BlankLine		; erase existing text
+(2)  449/     347 : D4                          SEP R4
+(2)  449/     348 : 02 EF                       dw  BLANKLINE
+(2)  450/     34A :                     			
+(2)  451/     34A :                     								
+(2)  452/     34A : (MACRO)             			RETURN
+(2)  452/     34A : D5                          SEP R5
+(2)  453/     34B :                     ;------------------------------------------------------------------------------------------
+(2)  454/     34B :                     
+(2)  455/     34B :                     ; =========================================================================================
+(2)  456/     34B :                     ; Clear character pixels from the current cursor location
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Tty1861.asm) - Page 26 - 8/28/2020 13:38:20
+
+
+(2)  457/     34B :                     ;
+(2)  458/     34B :                     ; Note:	*** UNSAFE *** This function does not check before accessing video data.
+(2)  459/     34B :                     ;		Must call WaitForSafeUpdate function before calling this function.
+(2)  460/     34B :                     ;
+(2)  461/     34B :                     ; Parameters:
+(2)  462/     34B :                     ; RE.0		X coordinate of the character
+(2)  463/     34B :                     ; RE.1		Y coordinate of the character
+(2)  464/     34B :                     ;
+(2)  465/     34B :                     ; Internal:
+(2)  466/     34B :                     ; RF		Pointer to video buffer
+(2)  467/     34B :                     ; RD.1		Mask for video bit values X byte
+(2)  468/     34B :                     ; RD.0		Counter
+(2)  469/     34B :                     ; RC.0		X Offset bit value
+(2)  470/     34B :                     ; RC.1         	X Offset byte value
+(2)  471/     34B :                     ; =========================================================================================
+(2)  472/     34B :                     
+(2)  473/     34B : (MACRO)             BlankCharacter:		CALL VideoOffsetY	; set pointer to video at y location
+(2)  473/     34B : D4                          SEP R4
+(2)  473/     34C : 02 C0                       dw  VIDEOOFFSETY
+(2)  474/     34E : (MACRO)             			CALL VideoOffsetX	; set pointer to video at x,y location
+(2)  474/     34E : D4                          SEP R4
+(2)  474/     34F : 02 D1                       dw  VIDEOOFFSETX
+(2)  475/     351 :                     
+(2)  476/     351 : 8E                  			GLO  RE			; check x location
+(2)  477/     352 : 3A 59               			BNZ  BCH_GetMask	; if inside line, calculate masks
+(2)  478/     354 :                     			
+(2)  479/     354 : (MACRO)             			CALL BlankLine		; if we are the begining, just clear the line
+(2)  479/     354 : D4                          SEP R4
+(2)  479/     355 : 02 EF                       dw  BLANKLINE
+(2)  480/     357 : 30 7F               			BR   BCH_Done			
+(2)  481/     359 :                     						
+(2)  482/     359 : (MACRO)             BCH_GetMask:		CALL CreateMask		; get the mask for video bits
+(2)  482/     359 : D4                          SEP R4
+(2)  482/     35A : 03 1A                       dw  CREATEMASK
+(2)  483/     35C :                     
+(2)  484/     35C : F8 00               			LDI  00H		; initialize counter 
+(2)  485/     35E : AD                  			PLO  RD			
+(2)  486/     35F :                     			
+(2)  487/     35F :                     
+(2)  488/     35F : 9D                  BCH_Blank:		GHI  RD			; get mask and put at M(X)
+(2)  489/     360 : 73                  			STXD
+(2)  490/     361 : 60                  			IRX
+(2)  491/     362 :                     			
+(2)  492/     362 : 0F                  			LDN  RF			; load video byte
+(2)  493/     363 : F2                  			AND  			; and with mask			
+(2)  494/     364 : 5F                  			STR  RF			; put it back in memory
+(2)  495/     365 :                     			
+(2)  496/     365 : 9C                  			GHI  RC			; get the byte offset value
+(2)  497/     366 : FD 07               			SDI  07H		; check for last byte
+(2)  498/     368 : 32 6F               			BZ   BCH_LastByte	; don't blank next byte after last byte
+(2)  499/     36A :                     			
+(2)  500/     36A : F8 00               			LDI  00H		; blank out next byte after byte 0 to 6
+(2)  501/     36C : 1F                  			INC  RF			; set video pointer to next byte
+(2)  502/     36D : 5F                  			STR  RF			; blank out any remaining pixels
+(2)  503/     36E : 2F                  			DEC  RF			; set video ptr back to x byte
+(2)  504/     36F :                     			
+(2)  505/     36F : 1D                  BCH_LastByte:		INC  RD			; increment counter
+(2)  506/     370 : 8D                  			GLO  RD			; check if done 5 times
+(2)  507/     371 : FD 05               			SDI  05H		
+(2)  508/     373 : 32 7F               			BZ   BCH_Done		
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Tty1861.asm) - Page 27 - 8/28/2020 13:38:20
+
+
+(2)  509/     375 :                     			
+(2)  510/     375 : 8F                  			GLO  RF			; Adjust pointer to next line of character
+(2)  511/     376 : FC 08               			ADI  08H		; each line is 8 bytes 
+(2)  512/     378 : AF                  			PLO  RF			; save low byte and adjust hi byte with carry
+(2)  513/     379 :                     			
+(2)  514/     379 : 9F                  			GHI  RF
+(2)  515/     37A : 7C 00               			ADCI 00H		
+(2)  516/     37C : BF                  			PHI  RF			; video pointer now points to next line of character
+(2)  517/     37D : 30 5F               			BR   BCH_Blank		; do next line
+(2)  518/     37F :                     			
+(2)  519/     37F : (MACRO)             BCH_Done:		RETURN
+(2)  519/     37F : D5                          SEP R5
+(2)  520/     380 :                     ;------------------------------------------------------------------------------------------
+(2)  521/     380 :                     
+(2)  522/     380 :                     
+(2)  523/     380 :                     ; =========================================================================================
+(2)  524/     380 :                     ; Move cursor backwards a number of pixel widths
+(2)  525/     380 :                     ;
+(2)  526/     380 :                     ; Note: Safe - This function does not access video data
+(2)  527/     380 :                     ;
+(2)  528/     380 :                     ; Parameters:
+(2)  529/     380 :                     ; RF.0		Width to back up cursor
+(2)  530/     380 :                     ; RE.0		X coordinate of the character
+(2)  531/     380 :                     ; RE.1		Y coordinate of the character
+(2)  532/     380 :                     ;
+(2)  533/     380 :                     ;
+(2)  534/     380 :                     ; Return:
+(2)  535/     380 :                     ; RE.0		Updated X coordinate
+(2)  536/     380 :                     ; RE.1		Updated Y coordinate
+(2)  537/     380 :                     ; =========================================================================================
+(2)  538/     380 :                     
+(2)  539/     380 : 8E                  LeftCursor:		GLO  RE			; 
+(2)  540/     381 : 32 8F               			BZ   LC_PreviousLine	; if begining of line, go back one line
+(2)  541/     383 :                     			
+(2)  542/     383 : 73                  			STXD 			; store x location it in M(X)
+(2)  543/     384 : 60                  			IRX
+(2)  544/     385 :                     			
+(2)  545/     385 : 8F                  			GLO  RF			; get the pixel width
+(2)  546/     386 :                     			
+(2)  547/     386 : F5                  			SD   			; move x back RD.0 pixels
+(2)  548/     387 : AE                  			PLO  RE			; save x										
+(2)  549/     388 : 33 A4               			BGE  LC_Exit		; if positive or zero, we are done
+(2)  550/     38A :                     			
+(2)  551/     38A : F8 00               			LDI  00H		; don't back up before begining of line
+(2)  552/     38C : AE                  			PLO  RE
+(2)  553/     38D : 30 A4               			BR   LC_Exit		
+(2)  554/     38F :                     			
+(2)  555/     38F : 9E                  LC_PreviousLine:	GHI  RE
+(2)  556/     390 : FF 06               			SMI  06H		; back up one line
+(2)  557/     392 : BE                  			PHI  RE
+(2)  558/     393 : 3B 9E               			BL   LC_Home		; but don't go beyond home
+(2)  559/     395 :                     			
+(2)  560/     395 : F8 40               			LDI  40H		; set M(X) to end of line
+(2)  561/     397 : 73                  			STXD 			; store eol in M(X)
+(2)  562/     398 : 60                  			IRX
+(2)  563/     399 :                     			
+(2)  564/     399 : 8F                  			GLO  RF			; get the pixel width
+(2)  565/     39A : F5                  			SD    			; back up from eol			
+(2)  566/     39B : AE                  			PLO  RE		
+(2)  567/     39C : 30 A4               			BR   LC_Exit
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Tty1861.asm) - Page 28 - 8/28/2020 13:38:20
+
+
+(2)  568/     39E :                     			
+(2)  569/     39E : =>FALSE             LC_Home:	IF Resolution == "64x64"
+(2)  570/     39E :                     			LDI  02H		; set y to first line
+(2)  571/     39E :                     			PHI  RE
+(2)  572/     39E : [569]               		ENDIF
+(2)  573/     39E :                     		
+(2)  574/     39E : =>TRUE              		IF Resolution == "64x32"	
+(2)  575/     39E : F8 01               			LDI  01H		; set y to first line
+(2)  576/     3A0 : BE                  			PHI  RE
+(2)  577/     3A1 : [574]               		ENDIF
+(2)  578/     3A1 : F8 00               			LDI  00H		; set x to beginning
+(2)  579/     3A3 : AE                  			PLO  RE
+(2)  580/     3A4 :                     
+(2)  581/     3A4 : (MACRO)             LC_Exit:		RETURN
+(2)  581/     3A4 : D5                          SEP R5
+(2)  582/     3A5 :                     ;------------------------------------------------------------------------------------------
+(2)  583/     3A5 :                     
+(2)  584/     3A5 :                     
+(2)  585/     3A5 :                     ; =========================================================================================
+(2)  586/     3A5 :                     ; Move cursor forwards a number of pixel widths
+(2)  587/     3A5 :                     ;
+(2)  588/     3A5 :                     ; Note: Safe - This function does not access video data
+(2)  589/     3A5 :                     ;
+(2)  590/     3A5 :                     ; Parameters:
+(2)  591/     3A5 :                     ; RF.0		Width to advance cursor
+(2)  592/     3A5 :                     ; RE.0		X coordinate of the character
+(2)  593/     3A5 :                     ; RE.1		Y coordinate of the character
+(2)  594/     3A5 :                     ;
+(2)  595/     3A5 :                     ;
+(2)  596/     3A5 :                     ; Return:
+(2)  597/     3A5 :                     ; RE.0		Updated X coordinate
+(2)  598/     3A5 :                     ; RE.1		Updated Y coordinate
+(2)  599/     3A5 :                     ; =========================================================================================
+(2)  600/     3A5 :                     
+(2)  601/     3A5 : 8F                  RightCursor:		GLO  RF			; advance the x coordinate by the
+(2)  602/     3A6 : 73                  			STXD			; width of the character + 1
+(2)  603/     3A7 : 60                  			IRX			; store width in M(X)
+(2)  604/     3A8 :                     			
+(2)  605/     3A8 : 8E                  			GLO  RE
+(2)  606/     3A9 : F4                  			ADD
+(2)  607/     3AA : FC 01               			ADI  01H
+(2)  608/     3AC : AE                  			PLO  RE
+(2)  609/     3AD :                     					
+(2)  610/     3AD : FD 3C               			SDI  3CH		; check x value to see if we went past 60
+(2)  611/     3AF : 33 BF               			BGE  RC_Exit
+(2)  612/     3B1 :                     					
+(2)  613/     3B1 : F8 00               			LDI  00H		; set x for beginning of next line and adjust y
+(2)  614/     3B3 : AE                  			PLO  RE
+(2)  615/     3B4 :                     								
+(2)  616/     3B4 : 9E                  			GHI  RE			; move y by 6 pixels
+(2)  617/     3B5 : FC 06               			ADI  06H
+(2)  618/     3B7 : BE                  			PHI  RE
+(2)  619/     3B8 :                     					
+(2)  620/     3B8 : =>FALSE             		IF Resolution == "64x64"		
+(2)  621/     3B8 :                     			SDI  3CH		; check y value to see if we went past 60
+(2)  622/     3B8 :                     			BGE  RC_Exit
+(2)  623/     3B8 :                     			
+(2)  624/     3B8 :                     			LDI  02H		; if so move back to first line at top of console
+(2)  625/     3B8 :                     			PHI  RE	
+(2)  626/     3B8 : [620]               		ENDIF
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Tty1861.asm) - Page 29 - 8/28/2020 13:38:20
+
+
+(2)  627/     3B8 :                     		
+(2)  628/     3B8 : =>TRUE              		IF Resolution == "64x32"	
+(2)  629/     3B8 : FD 1E               			SDI  1EH		; check y value to see if we went past 30
+(2)  630/     3BA : 33 BF               			BGE  RC_Exit
+(2)  631/     3BC :                     						
+(2)  632/     3BC : F8 01               			LDI  01H		; if so move back to first line at top of console
+(2)  633/     3BE : BE                  			PHI  RE	
+(2)  634/     3BF : [628]               		ENDIF
+(2)  635/     3BF :                     
+(2)  636/     3BF : (MACRO)             RC_Exit:		RETURN
+(2)  636/     3BF : D5                          SEP R5
+(2)  637/     3C0 :                     ;------------------------------------------------------------------------------------------
+(2)  638/     3C0 :                     
+(2)  639/     3C0 :                     ; =========================================================================================
+(2)  640/     3C0 :                     ; Move cursor back one pixel position and clear the column
+(2)  641/     3C0 :                     ;
+(2)  642/     3C0 :                     ; Note:	*** UNSAFE *** This function does not check before accessing video data.
+(2)  643/     3C0 :                     ;		Must call WaitForSafeUpdate function before calling this function.
+(2)  644/     3C0 :                     ;
+(2)  645/     3C0 :                     ; Parameters:
+(2)  646/     3C0 :                     ; RE.0		X coordinate of the character
+(2)  647/     3C0 :                     ; RE.1		Y coordinate of the character
+(2)  648/     3C0 :                     ; 
+(2)  649/     3C0 :                     ; Internals:
+(2)  650/     3C0 :                     ; RF.0		Width of to back up
+(2)  651/     3C0 :                     ;
+(2)  652/     3C0 :                     ; Return:
+(2)  653/     3C0 :                     ; RE.0		Updated X coordinate
+(2)  654/     3C0 :                     ; RE.1		Updated Y coordinate
+(2)  655/     3C0 :                     ; =========================================================================================
+(2)  656/     3C0 :                     
+(2)  657/     3C0 : F8 01               Rubout:			LDI  01H		; rubout one column of pixels
+(2)  658/     3C2 : AF                  			PLO  RF			; pixel width to back up
+(2)  659/     3C3 : (MACRO)             			CALL LeftCursor		; Move cursor back one character		
+(2)  659/     3C3 : D4                          SEP R4
+(2)  659/     3C4 : 03 80                       dw  LEFTCURSOR
+(2)  660/     3C6 :                     			
+(2)  661/     3C6 : (MACRO)             			CALL BlankCharacter	; erase the previous pixel column	
+(2)  661/     3C6 : D4                          SEP R4
+(2)  661/     3C7 : 03 4B                       dw  BLANKCHARACTER
+(2)  662/     3C9 :                     								
+(2)  663/     3C9 : (MACRO)             			RETURN
+(2)  663/     3C9 : D5                          SEP R5
+(2)  664/     3CA :                     ;------------------------------------------------------------------------------------------
+(2)  665/     3CA :                     
+(2)  666/     3CA :                     ; =========================================================================================
+(2)  667/     3CA :                     ; Move cursor forward one pixel position
+(2)  668/     3CA :                     ;
+(2)  669/     3CA :                     ; Note: Safe - This function does not access video data
+(2)  670/     3CA :                     ;
+(2)  671/     3CA :                     ; Parameters:
+(2)  672/     3CA :                     ; RE.0		X coordinate of the character
+(2)  673/     3CA :                     ; RE.1		Y coordinate of the character
+(2)  674/     3CA :                     ; 
+(2)  675/     3CA :                     ; Internals:
+(2)  676/     3CA :                     ; RF.0		Width of character (zero)
+(2)  677/     3CA :                     ;
+(2)  678/     3CA :                     ; Return:
+(2)  679/     3CA :                     ; RE.0		Updated X coordinate
+(2)  680/     3CA :                     ; RE.1		Updated Y coordinate
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Tty1861.asm) - Page 30 - 8/28/2020 13:38:20
+
+
+(2)  681/     3CA :                     ; =========================================================================================
+(2)  682/     3CA : F8 00               UnitSeparator: 		LDI  00H		; put zero as character width
+(2)  683/     3CC : AF                  			PLO  RF			
+(2)  684/     3CD :                     			
+(2)  685/     3CD : (MACRO)             			CALL RightCursor	; advance cursor 0+1 pixel column
+(2)  685/     3CD : D4                          SEP R4
+(2)  685/     3CE : 03 A5                       dw  RIGHTCURSOR
+(2)  686/     3D0 :                     			
+(2)  687/     3D0 : (MACRO)             			RETURN
+(2)  687/     3D0 : D5                          SEP R5
+(2)  688/     3D1 :                     ; =========================================================================================
+(2)  689/     3D1 :                     ; Clear line and position cursror at the begining of the current line. 
+(2)  690/     3D1 :                     ;
+(2)  691/     3D1 :                     ; Note:	*** UNSAFE *** This function does not check before accessing video data.
+(2)  692/     3D1 :                     ;		Must call WaitForSafeUpdate function before calling this function.
+(2)  693/     3D1 :                     ;
+(2)  694/     3D1 :                     ; Parameters:
+(2)  695/     3D1 :                     ; RE.0		X coordinate of the character
+(2)  696/     3D1 :                     ; RE.1		Y coordinate of the character
+(2)  697/     3D1 :                     ;
+(2)  698/     3D1 :                     ;
+(2)  699/     3D1 :                     ; Return:
+(2)  700/     3D1 :                     ; RE.0		Updated X coordinate
+(2)  701/     3D1 :                     ; RE.1		Updated Y coordinate
+(2)  702/     3D1 :                     ; =========================================================================================
+(2)  703/     3D1 :                     
+(2)  704/     3D1 : F8 00               CancelLine:		LDI  00H		; load zero and save as cursorX
+(2)  705/     3D3 : AE                  			PLO  RE			; set the x cursor to begining of line (zero) 
+(2)  706/     3D4 :                     
+(2)  707/     3D4 : (MACRO)             			CALL BlankLine		; clear the line
+(2)  707/     3D4 : D4                          SEP R4
+(2)  707/     3D5 : 02 EF                       dw  BLANKLINE
+(2)  708/     3D7 :                     			
+(2)  709/     3D7 : (MACRO)             			RETURN
+(2)  709/     3D7 : D5                          SEP R5
+(2)  710/     3D8 :                     ;------------------------------------------------------------------------------------------
+(2)  711/     3D8 :                     
+(2)  712/     3D8 :                     ; =========================================================================================
+(2)  713/     3D8 :                     ; ClearScreen - Blank the video screen and home the cursor.
+(2)  714/     3D8 :                     ;
+(2)  715/     3D8 :                     ; Note: Safe - This function checks the video status before accessing video data
+(2)  716/     3D8 :                     ;
+(2)  717/     3D8 :                     ; Internal:
+(2)  718/     3D8 :                     ; RF.1          zero value to fill screen
+(2)  719/     3D8 :                     ; RE.0		X coordinate of the character
+(2)  720/     3D8 :                     ; RE.1		Y coordinate of the character
+(2)  721/     3D8 :                     ; =========================================================================================
+(2)  722/     3D8 :                     
+(2)  723/     3D8 : (MACRO)             ClearScreen: 		CALL WaitForSafeUpdate	;Wait for DMA to complete before clearing
+(2)  723/     3D8 : D4                          SEP R4
+(2)  723/     3D9 : 02 A9                       dw  WAITFORSAFEUPDATE
+(2)  724/     3DB :                     			
+(2)  725/     3DB : F8 00               			LDI  00H		; clear screen
+(2)  726/     3DD : BF                  			PHI  RF
+(2)  727/     3DE : (MACRO)             			CALL FillScreen
+(2)  727/     3DE : D4                          SEP R4
+(2)  727/     3DF : 00 6D                       dw  FILLSCREEN
+(2)  728/     3E1 :                     			
+(2)  729/     3E1 : F8 00               			LDI  00H		; set x location to left margin			
+(2)  730/     3E3 : AE                  			PLO  RE
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Tty1861.asm) - Page 31 - 8/28/2020 13:38:20
+
+
+(2)  731/     3E4 :                     			
+(2)  732/     3E4 : =>FALSE             		IF Resolution == "64x64"
+(2)  733/     3E4 :                     			LDI  02H		; set y location to top line			
+(2)  734/     3E4 :                     			PHI  RE
+(2)  735/     3E4 : [732]               		ENDIF
+(2)  736/     3E4 :                     		
+(2)  737/     3E4 : =>TRUE              		IF Resolution == "64x32"
+(2)  738/     3E4 : F8 01               			LDI  01H		; set y location to top line			
+(2)  739/     3E6 : BE                  			PHI  RE
+(2)  740/     3E7 : [737]               		ENDIF
+(2)  741/     3E7 : (MACRO)             			CALL SetCursor		; send cursor home
+(2)  741/     3E7 : D4                          SEP R4
+(2)  741/     3E8 : 04 A6                       dw  SETCURSOR
+(2)  742/     3EA :                     					
+(2)  743/     3EA : (MACRO)             			RETURN
+(2)  743/     3EA : D5                          SEP R5
+(2)  744/     3EB :                     ;------------------------------------------------------------------------------------------
+(2)  745/     3EB :                     
+(2)  746/     3EB :                     ; =========================================================================================
+(2)  747/     3EB :                     ; GetChar - Get Character from Hex Input.  Wait for Input press and read Ascii character
+(2)  748/     3EB :                     ;		from data bus.
+(2)  749/     3EB :                     ;
+(2)  750/     3EB :                     ; Note: Safe - This function does not access video data
+(2)  751/     3EB :                     ;
+(2)  752/     3EB :                     ; Returns:
+(2)  753/     3EB :                     ; RC.0          Ascii character read from hex input
+(2)  754/     3EB :                     ; =========================================================================================
+(2)  755/     3EB :                     
+(2)  756/     3EB : 3F EB               GetChar:		BN4  GetChar		; Wait for Input press
+(2)  757/     3ED :                     
+(2)  758/     3ED : 6C                  			INP  4			; Input stores byte in M(X)
+(2)  759/     3EE :                     					
+(2)  760/     3EE : FA 7F               			ANI  007FH		; Ascii is only 7 bits
+(2)  761/     3F0 : AC                  			PLO  RC
+(2)  762/     3F1 :                     			
+(2)  763/     3F1 : 37 F1               GC_Release:		B4   GC_Release		; Wait for Input release
+(2)  764/     3F3 :                     
+(2)  765/     3F3 : (MACRO)             			RETURN
+(2)  765/     3F3 : D5                          SEP R5
+(2)  766/     3F4 :                     ;------------------------------------------------------------------------------------------
+(2)  767/     3F4 :                     
+(2)  768/     3F4 :                     ; =========================================================================================
+(2)  769/     3F4 :                     ; WriteHexOutput - Write a value out to the hex display
+(2)  770/     3F4 :                     ;
+(2)  771/     3F4 :                     ; Note: Safe - This function does not access video data
+(2)  772/     3F4 :                     ;
+(2)  773/     3F4 :                     ; Parameters:
+(2)  774/     3F4 :                     ; RC.0		Value to be shown on the hex display 
+(2)  775/     3F4 :                     ; =========================================================================================
+(2)  776/     3F4 :                     
+(2)  777/     3F4 : 8C                  WriteHexOutput:		GLO  RC		; Get byte to display
+(2)  778/     3F5 : 52                  			STR  R2		; Put byte on the stack
+(2)  779/     3F6 :                     			
+(2)  780/     3F6 : 64                  			OUT  4		; Show it. This increments stack pointer,
+(2)  781/     3F7 : 22                  			DEC  R2		; so back up stack pointer to point to the end.
+(2)  782/     3F8 :                     					
+(2)  783/     3F8 : (MACRO)             			RETURN
+(2)  783/     3F8 : D5                          SEP R5
+(2)  784/     3F9 :                     ;------------------------------------------------------------------------------------------
+(2)  785/     3F9 :                     
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Tty1861.asm) - Page 32 - 8/28/2020 13:38:20
+
+
+(2)  786/     3F9 :                     ; =========================================================================================
+(2)  787/     3F9 :                     ; ReadHexInput - Read a byte from Hex Input.  Wait for Input press and read from data bus.
+(2)  788/     3F9 :                     ;
+(2)  789/     3F9 :                     ; Note: Safe - This function does not access video data
+(2)  790/     3F9 :                     ;
+(2)  791/     3F9 :                     ; Returns:
+(2)  792/     3F9 :                     ; RC.0          Byte read from hex input
+(2)  793/     3F9 :                     ; =========================================================================================
+(2)  794/     3F9 : 3F F9               ReadHexInput:		BN4  ReadHexInput	; Wait for Input press
+(2)  795/     3FB :                     
+(2)  796/     3FB : 6C                  			INP  4			; Input stores byte in M(X)					
+(2)  797/     3FC : AC                  			PLO  RC			; Save byte for return
+(2)  798/     3FD :                     			
+(2)  799/     3FD : 37 FD               RHI_Release:		B4   RHI_Release	; Wait for Input release
+(2)  800/     3FF :                     
+(2)  801/     3FF : (MACRO)             			RETURN			; return
+(2)  801/     3FF : D5                          SEP R5
+(2)  802/     400 :                     ;------------------------------------------------------------------------------------------
+(2)  803/     400 :                     
+(2)  804/     400 :                     ; =========================================================================================
+(2)  805/     400 :                     ; WaitForInput - Wait for Input key press and release.  No data is read.
+(2)  806/     400 :                     ;
+(2)  807/     400 :                     ; Note: Safe - This function does not access video data
+(2)  808/     400 :                     ;
+(2)  809/     400 :                     ; Returns:
+(2)  810/     400 :                     ;
+(2)  811/     400 :                     ; =========================================================================================
+(2)  812/     400 :                     
+(2)  813/     400 : 3F 00               WaitForInput:		BN4  WaitForInput	; Wait for Input press
+(2)  814/     402 :                     
+(2)  815/     402 :                     			
+(2)  816/     402 : 37 02               WFI_Release:		B4   WFI_Release	; Wait for Input release
+(2)  817/     404 :                     
+(2)  818/     404 : (MACRO)             			RETURN			; return
+(2)  818/     404 : D5                          SEP R5
+(2)  819/     405 :                     ;------------------------------------------------------------------------------------------
+(2)  820/     405 :                     
+(2)  821/     405 :                     
+(2)  822/     405 :                     ; =========================================================================================
+(2)  823/     405 :                     ; PutChar - Put a character on the screen and advance the cursor
+(2)  824/     405 :                     ;
+(2)  825/     405 :                     ; Note: Safe - This function checks the video status before accessing video data
+(2)  826/     405 :                     ;
+(2)  827/     405 :                     ; Parameters:
+(2)  828/     405 :                     ; RC.0		ASCII code of the character (20 - 5F)
+(2)  829/     405 :                     ;
+(2)  830/     405 :                     ; Internal:
+(2)  831/     405 :                     ; RC.1		Temporary values
+(2)  832/     405 :                     ; RE.0		X coordinate of the character
+(2)  833/     405 :                     ; RE.1		Y coordinate of the character
+(2)  834/     405 :                     ; RF.0		Width of character from drawCharacter
+(2)  835/     405 :                     ; =========================================================================================
+(2)  836/     405 : (MACRO)             PutChar:		CALL WaitForSafeUpdate
+(2)  836/     405 : D4                          SEP R4
+(2)  836/     406 : 02 A9                       dw  WAITFORSAFEUPDATE
+(2)  837/     408 :                     			
+(2)  838/     408 : (MACRO)             			CALL WriteChar
+(2)  838/     408 : D4                          SEP R4
+(2)  838/     409 : 04 64                       dw  WRITECHAR
+(2)  839/     40B :                     			
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Tty1861.asm) - Page 33 - 8/28/2020 13:38:20
+
+
+(2)  840/     40B : =>FALSE             		IF BackBuffer <> "OFF"
+(2)  841/     40B :                     			CALL CopyBackBuffer 	; update SWAP or COPY buffer
+(2)  842/     40B : [840]               		ENDIF	
+(2)  843/     40B :                     					
+(2)  844/     40B : (MACRO)             			RETURN
+(2)  844/     40B : D5                          SEP R5
+(2)  845/     40C :                     ;------------------------------------------------------------------------------------------
+(2)  846/     40C :                     
+(2)  847/     40C :                     
+(2)  848/     40C :                     ; =========================================================================================
+(2)  849/     40C :                     ; HandleControlChar - Process a control character and move the cursor on screen
+(2)  850/     40C :                     ;
+(2)  851/     40C :                     ; Note:	*** UNSAFE *** This function does not check before accessing video data.
+(2)  852/     40C :                     ;		Must call WaitForSafeUpdate function before calling this function.
+(2)  853/     40C :                     ;
+(2)  854/     40C :                     ; Parameters:
+(2)  855/     40C :                     ; RC.0		ASCII code of the character (20 - 5F)
+(2)  856/     40C :                     ; RE.0		X coordinate of the character
+(2)  857/     40C :                     ; RE.1		Y coordinate of the character
+(2)  858/     40C :                     
+(2)  859/     40C :                     ; Internals:
+(2)  860/     40C :                     ; RC.1		Temporary values
+(2)  861/     40C :                     ; RF.0		Width of character 
+(2)  862/     40C :                     ;
+(2)  863/     40C :                     ; Returns:
+(2)  864/     40C :                     ; RE.0		Updated X coordinate of the character
+(2)  865/     40C :                     ; RE.1		Updated Y coordinate of the character
+(2)  866/     40C :                     ; =========================================================================================
+(2)  867/     40C : 8C                  HandleControlChar:	GLO  RC			; get the character
+(2)  868/     40D : FD 0A               			SDI  0AH		; check for newline
+(2)  869/     40F : 32 5E               			BZ   HCC_NewLine
+(2)  870/     411 :                     										
+(2)  871/     411 : 8C                  			GLO  RC			; get the character
+(2)  872/     412 : FD 0D               			SDI  0DH		; check for carriage return
+(2)  873/     414 : 32 5E               			BZ   HCC_NewLine
+(2)  874/     416 :                     			
+(2)  875/     416 : 8C                  			GLO  RC			; get the character
+(2)  876/     417 : FD 0C               			SDI  0CH		; check for form feed
+(2)  877/     419 : 32 59               			BZ   HCC_FormFeed
+(2)  878/     41B :                     			
+(2)  879/     41B : 8C                  			GLO  RC			; get the character
+(2)  880/     41C : FD 09               			SDI  09H		; check for tab
+(2)  881/     41E : 32 4F               			BZ   HCC_Tab
+(2)  882/     420 :                     			
+(2)  883/     420 : 8C                  			GLO  RC			; get the character
+(2)  884/     421 : FD 0B               			SDI  0BH		; check for vertical tab
+(2)  885/     423 : 32 54               			BZ   HCC_VTab
+(2)  886/     425 :                     			
+(2)  887/     425 : 8C                  			GLO  RC			; get the character
+(2)  888/     426 : FD 08               			SDI  08H		; check for backspace
+(2)  889/     428 : 32 4A               			BZ   HCC_Backspace	
+(2)  890/     42A :                     			
+(2)  891/     42A : 8C                  			GLO  RC			; get the character 
+(2)  892/     42B : FD 7F               			SDI  7FH		; check for del
+(2)  893/     42D : 32 45               			BZ   HCC_Del
+(2)  894/     42F :                     			
+(2)  895/     42F : 8C                  			GLO  RC			; get the character
+(2)  896/     430 : FD 18               			SDI  18H		; check for cancel the line
+(2)  897/     432 : 32 40               			BZ   HCC_Cancel
+(2)  898/     434 :                     			
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Tty1861.asm) - Page 34 - 8/28/2020 13:38:20
+
+
+(2)  899/     434 : 8C                  			GLO  RC			; get character		
+(2)  900/     435 : FD 1F               			SDI  1FH		; check for unit separator
+(2)  901/     437 : 32 39               			BZ   HCC_Unit
+(2)  902/     439 :                     			
+(2)  903/     439 : (MACRO)             HCC_Unit:		CALL UnitSeparator	; advance cursor 1 pixel column space
+(2)  903/     439 : D4                          SEP R4
+(2)  903/     43A : 03 CA                       dw  UNITSEPARATOR
+(2)  904/     43C : 30 63               			BR   HCC_Exit		
+(2)  905/     43E :                     			
+(2)  906/     43E : 30 63               			BR   HCC_Exit		; ignore everything else
+(2)  907/     440 :                     
+(2)  908/     440 : (MACRO)             HCC_Cancel:		CALL CancelLine		; erase the current line
+(2)  908/     440 : D4                          SEP R4
+(2)  908/     441 : 03 D1                       dw  CANCELLINE
+(2)  909/     443 : 30 63               			BR   HCC_Exit
+(2)  910/     445 :                     
+(2)  911/     445 : (MACRO)             HCC_Del:		CALL Rubout		; del backs up and rubs out one column			
+(2)  911/     445 : D4                          SEP R4
+(2)  911/     446 : 03 C0                       dw  RUBOUT
+(2)  912/     448 : 30 63               			BR   HCC_Exit
+(2)  913/     44A :                     			
+(2)  914/     44A : (MACRO)             HCC_Backspace:		CALL Backspace		; move cursor back and delete a character
+(2)  914/     44A : D4                          SEP R4
+(2)  914/     44B : 03 10                       dw  BACKSPACE
+(2)  915/     44D : 30 63               			BR   HCC_Exit		
+(2)  916/     44F :                     
+(2)  917/     44F : (MACRO)             HCC_Tab:		CALL TabCursor		; move to next tab stop
+(2)  917/     44F : D4                          SEP R4
+(2)  917/     450 : 03 02                       dw  TABCURSOR
+(2)  918/     452 : 30 63               			BR   HCC_Exit
+(2)  919/     454 :                     			
+(2)  920/     454 : (MACRO)             HCC_VTab:		CALL DownCursor		; move to next line, same x position
+(2)  920/     454 : D4                          SEP R4
+(2)  920/     455 : 03 3C                       dw  DOWNCURSOR
+(2)  921/     457 : 30 63               			BR   HCC_Exit
+(2)  922/     459 :                     
+(2)  923/     459 : (MACRO)             HCC_FormFeed:		CALL ClearScreen	; form feed clears the screen			
+(2)  923/     459 : D4                          SEP R4
+(2)  923/     45A : 03 D8                       dw  CLEARSCREEN
+(2)  924/     45C : 30 63               			BR   HCC_Exit		
+(2)  925/     45E :                     										
+(2)  926/     45E : (MACRO)             HCC_NewLine:		CALL NextLine		; go to next line and end			
+(2)  926/     45E : D4                          SEP R4
+(2)  926/     45F : 03 2D                       dw  NEXTLINE
+(2)  927/     461 : 30 63               			BR   HCC_Exit
+(2)  928/     463 :                     							
+(2)  929/     463 : (MACRO)             HCC_Exit:		RETURN
+(2)  929/     463 : D5                          SEP R5
+(2)  930/     464 :                     ;------------------------------------------------------------------------------------------
+(2)  931/     464 :                     
+(2)  932/     464 :                     ; =========================================================================================
+(2)  933/     464 :                     ; WriteChar - Write a character on the screen and advance the cursor
+(2)  934/     464 :                     ;
+(2)  935/     464 :                     ; Note:	*** UNSAFE *** This function does not check before accessing video data.
+(2)  936/     464 :                     ;		Must call WaitForSafeUpdate function before calling this function.
+(2)  937/     464 :                     ;
+(2)  938/     464 :                     ; Parameters:
+(2)  939/     464 :                     ; RC.0		ASCII code of the character (20 - 5F)
+(2)  940/     464 :                     ;
+(2)  941/     464 :                     ; Internal:
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Tty1861.asm) - Page 35 - 8/28/2020 13:38:20
+
+
+(2)  942/     464 :                     ; RC.1		Temporary values
+(2)  943/     464 :                     ; RE.0		X coordinate of the character
+(2)  944/     464 :                     ; RE.1		Y coordinate of the character
+(2)  945/     464 :                     ; RF.0		Width of character from drawCharacter
+(2)  946/     464 :                     ; =========================================================================================
+(2)  947/     464 :                     
+(2)  948/     464 : (MACRO)             WriteChar:		CALL GetCursor
+(2)  948/     464 : D4                          SEP R4
+(2)  948/     465 : 04 B7                       dw  GETCURSOR
+(2)  949/     467 :                     								
+(2)  950/     467 : 8E                  			GLO  RE			; get the x location
+(2)  951/     468 :                     													
+(2)  952/     468 : 3A 6D               			BNZ  WC_SetChar		; check for beginning of new line
+(2)  953/     46A : (MACRO)             			CALL BlankLine		; if at begining, blank the line
+(2)  953/     46A : D4                          SEP R4
+(2)  953/     46B : 02 EF                       dw  BLANKLINE
+(2)  954/     46D :                     			
+(2)  955/     46D : 8C                  WC_SetChar:		GLO  RC			; check for DEL the only control char
+(2)  956/     46E : FD 7F               			SDI  7FH		; that is greater than 20H
+(2)  957/     470 : 32 77               			BZ   WC_Control		
+(2)  958/     472 :                     															
+(2)  959/     472 : 8C                  			GLO  RC                 ; get the character
+(2)  960/     473 : FF 20               			SMI  20H		; check for any printable character
+(2)  961/     475 : 33 7C               			BGE  WC_Draw		
+(2)  962/     477 :                     										
+(2)  963/     477 : (MACRO)             WC_Control:		CALL HandleControlChar	; everthing else is a control character
+(2)  963/     477 : D4                          SEP R4
+(2)  963/     478 : 04 0C                       dw  HANDLECONTROLCHAR
+(2)  964/     47A : 30 8B               			BR   WC_UpdateCursor	; save cursor changes after control char
+(2)  965/     47C :                     				
+(2)  966/     47C : 8E                  WC_Draw:		GLO  RE			; push RE with cursor location onto the stack
+(2)  967/     47D : 73                  			STXD
+(2)  968/     47E : 9E                  			GHI  RE
+(2)  969/     47F : 73                  			STXD 
+(2)  970/     480 :                     			
+(2)  971/     480 : (MACRO)             			CALL DrawCharacter	; write the chracter
+(2)  971/     480 : D4                          SEP R4
+(2)  971/     481 : 00 F1                       dw  DRAWCHARACTER
+(2)  972/     483 :                     								
+(2)  973/     483 : 60                  			IRX					
+(2)  974/     484 : 72                  			LDXA
+(2)  975/     485 : BE                  			PHI  RE			; restore RE with cursor location
+(2)  976/     486 : F0                  			LDX
+(2)  977/     487 : AE                  			PLO  RE				
+(2)  978/     488 :                     			
+(2)  979/     488 : (MACRO)             			CALL RightCursor	; advance cursor by character width + 1
+(2)  979/     488 : D4                          SEP R4
+(2)  979/     489 : 03 A5                       dw  RIGHTCURSOR
+(2)  980/     48B :                     			
+(2)  981/     48B : (MACRO)             WC_UpdateCursor:	CALL SetCursor
+(2)  981/     48B : D4                          SEP R4
+(2)  981/     48C : 04 A6                       dw  SETCURSOR
+(2)  982/     48E :                     					
+(2)  983/     48E : (MACRO)             WC_Exit:		RETURN
+(2)  983/     48E : D5                          SEP R5
+(2)  984/     48F :                     ;------------------------------------------------------------------------------------------
+(2)  985/     48F :                     
+(2)  986/     48F :                     ; =========================================================================================
+(2)  987/     48F :                     ; PutString - Read characters from a string and write to video until a null is read.
+(2)  988/     48F :                     ; Parameters:
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Tty1861.asm) - Page 36 - 8/28/2020 13:38:20
+
+
+(2)  989/     48F :                     ; RF 	- pointer to String
+(2)  990/     48F :                     ;
+(2)  991/     48F :                     ; Note: Safe - This function checks the video status before accessing video data
+(2)  992/     48F :                     ;
+(2)  993/     48F :                     ; Internal:
+(2)  994/     48F :                     ; RC.0	- character value read from input
+(2)  995/     48F :                     ; =========================================================================================
+(2)  996/     48F :                     
+(2)  997/     48F : (MACRO)             PutString:		CALL WaitForSafeUpdate	
+(2)  997/     48F : D4                          SEP R4
+(2)  997/     490 : 02 A9                       dw  WAITFORSAFEUPDATE
+(2)  998/     492 :                     
+(2)  999/     492 : 0F                  PS_WriteString:		LDN  RF			; get character, exit if 0 (null)
+(2) 1000/     493 : AC                  			PLO  RC
+(2) 1001/     494 : 32 A5               			BZ   PS_Exit
+(2) 1002/     496 : 1F                  			INC  RF
+(2) 1003/     497 :                     					
+(2) 1004/     497 : 8F                  			GLO  RF			; push RF onto the stack
+(2) 1005/     498 : 73                  			STXD
+(2) 1006/     499 : 9F                  			GHI  RF
+(2) 1007/     49A : 73                  			STXD
+(2) 1008/     49B :                     		
+(2) 1009/     49B :                     					
+(2) 1010/     49B : (MACRO)             			CALL WriteChar		; write character to video
+(2) 1010/     49B : D4                          SEP R4
+(2) 1010/     49C : 04 64                       dw  WRITECHAR
+(2) 1011/     49E :                     						; ok to use write since we know it's safe
+(2) 1012/     49E :                     			
+(2) 1013/     49E : 60                  			IRX			; restore RF from stack
+(2) 1014/     49F : 72                  			LDXA
+(2) 1015/     4A0 : BF                  			PHI  RF
+(2) 1016/     4A1 : F0                  			LDX
+(2) 1017/     4A2 : AF                  			PLO  RF
+(2) 1018/     4A3 :                     					
+(2) 1019/     4A3 : 30 92               			BR PS_WriteString	; continue with next character until null
+(2) 1020/     4A5 :                     			
+(2) 1021/     4A5 :                     
+(2) 1022/     4A5 : =>FALSE             PS_Exit:	IF BackBuffer <> "OFF"
+(2) 1023/     4A5 :                     			CALL CopyBackBuffer 	; update SWAP or COPY buffer
+(2) 1024/     4A5 : [1022]              		ENDIF	
+(2) 1025/     4A5 :                     
+(2) 1026/     4A5 : (MACRO)             			RETURN
+(2) 1026/     4A5 : D5                          SEP R5
+(2) 1027/     4A6 :                     ;------------------------------------------------------------------------------------------
+(2) 1028/     4A6 :                     ; =========================================================================================
+(2) 1029/     4A6 :                     ; SetCursor - Save the Cursor value into memory
+(2) 1030/     4A6 :                     ;
+(2) 1031/     4A6 :                     ; Note: Safe - This function does not access video data
+(2) 1032/     4A6 :                     ;
+(2) 1033/     4A6 :                     ; Parameters:
+(2) 1034/     4A6 :                     ; RE.0		X coordinate of the character
+(2) 1035/     4A6 :                     ; RE.1		Y coordinate of the character
+(2) 1036/     4A6 :                     ;
+(2) 1037/     4A6 :                     ; Internal:
+(2) 1038/     4A6 :                     ; RD            Pointer to CursorY and CursorX
+(2) 1039/     4A6 :                     ; =========================================================================================
+(2) 1040/     4A6 : (MACRO)             SetCursor:		LOAD RD, CursorX	; set the x cursor							
+(2) 1040/     4A6 : F8 05                       LDI  lo(CURSORX)
+(2) 1040/     4A8 : AD                          PLO  RD
+(2) 1040/     4A9 : F8 7F                       LDI  hi(CURSORX)
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Tty1861.asm) - Page 37 - 8/28/2020 13:38:20
+
+
+(2) 1040/     4AB : BD                          PHI  RD     
+(2) 1041/     4AC : 8E                  			GLO  RE			; get character x location
+(2) 1042/     4AD : 5D                  			STR  RD			; save the x cursor value	
+(2) 1043/     4AE :                     											
+(2) 1044/     4AE : (MACRO)             			LOAD RD, CursorY	; set the y cursor													
+(2) 1044/     4AE : F8 06                       LDI  lo(CURSORY)
+(2) 1044/     4B0 : AD                          PLO  RD
+(2) 1044/     4B1 : F8 7F                       LDI  hi(CURSORY)
+(2) 1044/     4B3 : BD                          PHI  RD     
+(2) 1045/     4B4 : 9E                  			GHI  RE			; get character y location
+(2) 1046/     4B5 : 5D                  			STR  RD			; save the y cursor value												
+(2) 1047/     4B6 :                     					
+(2) 1048/     4B6 : (MACRO)             			RETURN
+(2) 1048/     4B6 : D5                          SEP R5
+(2) 1049/     4B7 :                     ;------------------------------------------------------------------------------------------
+(2) 1050/     4B7 :                     
+(2) 1051/     4B7 :                     ; =========================================================================================
+(2) 1052/     4B7 :                     ; GetCursor - Read the Cursor value from memory
+(2) 1053/     4B7 :                     ; 
+(2) 1054/     4B7 :                     ; Note: Safe - This function does not access video data
+(2) 1055/     4B7 :                     :
+(2) 1056/     4B7 :                     ; Parameters:
+(2) 1057/     4B7 :                     ;
+(2) 1058/     4B7 :                     ; Internal:
+(2) 1059/     4B7 :                     ; RD            Pointer to CursorY and CursorX
+(2) 1060/     4B7 :                     ;
+(2) 1061/     4B7 :                     ; Returns:
+(2) 1062/     4B7 :                     ; RE.0		X coordinate of the character
+(2) 1063/     4B7 :                     ; RE.1		Y coordinate of the character
+(2) 1064/     4B7 :                     ; =========================================================================================
+(2) 1065/     4B7 : (MACRO)             GetCursor:		LOAD RD, CursorX	; get the x cursor							
+(2) 1065/     4B7 : F8 05                       LDI  lo(CURSORX)
+(2) 1065/     4B9 : AD                          PLO  RD
+(2) 1065/     4BA : F8 7F                       LDI  hi(CURSORX)
+(2) 1065/     4BC : BD                          PHI  RD     
+(2) 1066/     4BD : 0D                  			LDN  RD			; load the x cursor value					
+(2) 1067/     4BE : AE                  			PLO  RE			; set character x location
+(2) 1068/     4BF :                     			
+(2) 1069/     4BF : (MACRO)             			LOAD RD, CursorY	; get the y cursor										
+(2) 1069/     4BF : F8 06                       LDI  lo(CURSORY)
+(2) 1069/     4C1 : AD                          PLO  RD
+(2) 1069/     4C2 : F8 7F                       LDI  hi(CURSORY)
+(2) 1069/     4C4 : BD                          PHI  RD     
+(2) 1070/     4C5 : 0D                  			LDN  RD			; load the y cursor value											
+(2) 1071/     4C6 : BE                  			PHI  RE			; set character y location
+(2) 1072/     4C7 :                     					
+(2) 1073/     4C7 : (MACRO)             			RETURN
+(2) 1073/     4C7 : D5                          SEP R5
+(2) 1074/     4C8 :                     ;------------------------------------------------------------------------------------------
+(2) 1075/     4C8 :                     
+(2) 1076/     4C8 :                     
+(2) 1077/     4C8 :                     
+(2) 1078/     4C8 : [19]                					ENDIF
+(1)  125/     4C8 : [121]               			ENDIF
+(1)  126/     4C8 :                     			
+(1)  127/     4C8 : =>FALSE             			IF BackBuffer == "COPY"
+(1)  128/     4C8 :                     				INCLUDE "Fonts.asm"
+(1)  129/     4C8 :                     				INCLUDE "Text1861.asm"	
+(1)  130/     4C8 :                     				INCLUDE "Tty1861.asm"
+(1)  131/     4C8 : [127]               			ENDIF
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Initialize.asm) - Page 38 - 8/28/2020 13:38:20
+
+
+(1)  132/     4C8 :                     			
+(1)  133/     4C8 : =>FALSE             			IF BackBuffer == "SWAP"			
+(1)  134/     4C8 :                     				INCLUDE "Tty1861.asm"								
+(1)  135/     4C8 :                     				INCLUDE "Text1861.asm"					
+(1)  136/     4C8 :                     				INCLUDE "Fonts.asm"
+(1)  137/     4C8 : [133]               			ENDIF				
+(1)  138/     4C8 :                     				
+(1)  139/     4C8 : [120]               		ENDIF
+(1)  140/     4C8 :                     		
+(1)  141/     4C8 :                     			; pad compiled code to end of page to avoid page boundary errors 	
+(1)  142/     4C8 :                     				INCLUDE "Padding.asm"  
+(2)    1/     4C8 :                     ; *****************************************************************************************
+(2)    2/     4C8 :                     ; Padding - Code with 64x64 resolution and the Swap and Copy BackBuffer options assembles  
+(2)    3/     4C8 :                     ;	    to near the end of a page boundary.  This file contains padding definitions to 
+(2)    4/     4C8 :                     ;           prevent errors in user code caused by branches straddling a page boundary.  
+(2)    5/     4C8 :                     ;	    This can cause 'jump target not on same page' errors when assembling user code.
+(2)    6/     4C8 :                     ;
+(2)    7/     4C8 :                     ; Copyright (c) 2020 by Gaston Williams
+(2)    8/     4C8 :                     ; *****************************************************************************************
+(2)    9/     4C8 :                     
+(2)   10/     4C8 :                     ; =========================================================================================
+(2)   11/     4C8 :                     ; Padding for more than 16 bytes is commented out.
+(2)   12/     4C8 :                     ; =========================================================================================
+(2)   13/     4C8 :                     		
+(2)   14/     4C8 : =>FALSE             		IF Resolution == "64x64"
+(2)   15/     4C8 :                     			IF BackBuffer == "COPY"
+(2)   16/     4C8 :                     				db 7 dup 00H
+(2)   17/     4C8 : [15]                			ENDIF	
+(2)   18/     4C8 :                     			
+(2)   19/     4C8 :                     			IF BackBuffer == "SWAP"
+(2)   20/     4C8 :                     				db 13 dup 00H
+(2)   21/     4C8 : [19]                			ENDIF				
+(2)   22/     4C8 :                     			
+(2)   23/     4C8 :                     			; Uncomment the lines below if there's a boundary issue with 64x64
+(2)   24/     4C8 :                     			; resolution user code when assembled with the BackBuffer option "OFF"
+(2)   25/     4C8 :                     	
+(2)   26/     4C8 :                     			;IF BackBuffer == "OFF"
+(2)   27/     4C8 :                     			;	db 41 dup 00H
+(2)   28/     4C8 :                     			;ENDIF
+(2)   29/     4C8 :                     			
+(2)   30/     4C8 : [14]                		ENDIF
+(2)   31/     4C8 :                     		
+(2)   32/     4C8 : =>TRUE              		IF Resolution == "64x32"
+(2)   33/     4C8 :                     			; Uncomment the lines below if there's a boundary issue with 64x32
+(2)   34/     4C8 :                     			; resolution user code when assembled with the BackBuffer option "COPY"
+(2)   35/     4C8 :                     			
+(2)   36/     4C8 :                     			;IF BackBuffer == "COPY"
+(2)   37/     4C8 :                     			;	db 24 dup 00H
+(2)   38/     4C8 :                     			;ENDIF
+(2)   39/     4C8 :                     
+(2)   40/     4C8 :                     			; Uncomment the lines below if there's a boundary issue with 64x32
+(2)   41/     4C8 :                     			; resolution user code when assembled with the BackBuffer option "SWAP"
+(2)   42/     4C8 :                     			
+(2)   43/     4C8 :                     			;IF BackBuffer == "SWAP"
+(2)   44/     4C8 :                     			;	db 32 dup 00H
+(2)   45/     4C8 :                     			;ENDIF
+(2)   46/     4C8 :                     			
+(2)   47/     4C8 :                     			; Uncomment the lines below if there's a boundary issue with 64x32
+(2)   48/     4C8 :                     			; resolution user code when assembled with the BackBuffer option "OFF"
+(2)   49/     4C8 :                     	
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm(Padding.asm) - Page 39 - 8/28/2020 13:38:20
+
+
+(2)   50/     4C8 :                     			;IF BackBuffer == "OFF"
+(2)   51/     4C8 :                     			;	db 56 dup 00H
+(2)   52/     4C8 :                     			;ENDIF			
+(2)   53/     4C8 :                     		
+(2)   54/     4C8 : [32]                		ENDIF
+(2)   55/     4C8 :                     ;------------------------------------------------------------------------------------------
+(1)  143/     4C8 :                     				
+(1)  144/     4C8 :                     
+(1)  145/     4C8 :                     
+(1)  146/     4C8 :                     
+      16/     4C8 :                     
+      17/     4C8 :                     
+      18/     4C8 :                     ; =========================================================================================
+      19/     4C8 :                     ; Main
+      20/     4C8 :                     ; =========================================================================================
+      21/     4C8 :                     
+      22/     4C8 : (MACRO)             Start:			CALL BeginTerminal
+      22/     4C8 : D4                          SEP R4
+      22/     4C9 : 02 8D                       dw  BEGINTERMINAL
+      23/     4CB :                     
+      24/     4CB :                     				
+      25/     4CB : (MACRO)             			CALL VideoOn		; turn video on					
+      25/     4CB : D4                          SEP R4
+      25/     4CC : 02 98                       dw  VIDEOON
+      26/     4CE :                     			
+      27/     4CE : (MACRO)             MainLoop:  		CALL HelloWorld
+      27/     4CE : D4                          SEP R4
+      27/     4CF : 04 D6                       dw  HELLOWORLD
+      28/     4D1 :                     					
+      29/     4D1 :                     					
+      30/     4D1 : (MACRO)             			CALL WaitForInput      	; wait for input from the hex keyboard								
+      30/     4D1 : D4                          SEP R4
+      30/     4D2 : 04 00                       dw  WAITFORINPUT
+      31/     4D4 :                     			
+      32/     4D4 : 30 CE               			BR   MainLoop		; say Hello! again						
+      33/     4D6 :                     ;----------------------------------------------------------------------------------------
+      34/     4D6 :                     
+      35/     4D6 :                     
+      36/     4D6 :                     ; =========================================================================================
+      37/     4D6 :                     ; HelloWorld - write a Hello, World! message to the screen using PutChar
+      38/     4D6 :                     ;
+      39/     4D6 :                     ; Internals:
+      40/     4D6 :                     ; RC.0 - Character to write to screen
+      41/     4D6 :                     ; =========================================================================================
+      42/     4D6 :                     
+      43/     4D6 : F8 48               HelloWorld:		LDI  "H"
+      44/     4D8 : AC                  			PLO  RC											
+      45/     4D9 :                     					
+      46/     4D9 : (MACRO)             			CALL PutChar
+      46/     4D9 : D4                          SEP R4
+      46/     4DA : 04 05                       dw  PUTCHAR
+      47/     4DC :                     					
+      48/     4DC : F8 65               			LDI  "e"
+      49/     4DE : AC                  			PLO  RC
+      50/     4DF :                     					
+      51/     4DF : (MACRO)             			CALL PutChar
+      51/     4DF : D4                          SEP R4
+      51/     4E0 : 04 05                       dw  PUTCHAR
+      52/     4E2 :                     					
+      53/     4E2 : F8 6C               			LDI  "l"
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm - Page 40 - 8/28/2020 13:38:20
+
+
+      54/     4E4 : AC                  			PLO  RC
+      55/     4E5 :                     					
+      56/     4E5 : (MACRO)             			CALL PutChar
+      56/     4E5 : D4                          SEP R4
+      56/     4E6 : 04 05                       dw  PUTCHAR
+      57/     4E8 :                     
+      58/     4E8 : F8 6C               			LDI  "l"
+      59/     4EA : AC                  			PLO  RC
+      60/     4EB :                     					
+      61/     4EB : (MACRO)             			CALL PutChar
+      61/     4EB : D4                          SEP R4
+      61/     4EC : 04 05                       dw  PUTCHAR
+      62/     4EE :                     					
+      63/     4EE : F8 6F               			LDI  "o"
+      64/     4F0 : AC                  			PLO  RC
+      65/     4F1 :                     										
+      66/     4F1 : (MACRO)             			CALL PutChar
+      66/     4F1 : D4                          SEP R4
+      66/     4F2 : 04 05                       dw  PUTCHAR
+      67/     4F4 :                     					
+      68/     4F4 : F8 2C               			LDI  ","
+      69/     4F6 : AC                  			PLO  RC
+      70/     4F7 :                     												
+      71/     4F7 : (MACRO)             			CALL PutChar
+      71/     4F7 : D4                          SEP R4
+      71/     4F8 : 04 05                       dw  PUTCHAR
+      72/     4FA :                     
+      73/     4FA : F8 20               			LDI  " "
+      74/     4FC : AC                  			PLO  RC
+      75/     4FD :                     										
+      76/     4FD : (MACRO)             			CALL PutChar
+      76/     4FD : D4                          SEP R4
+      76/     4FE : 04 05                       dw  PUTCHAR
+      77/     500 :                     					
+      78/     500 : F8 57               			LDI  "W"
+      79/     502 : AC                  			PLO  RC
+      80/     503 :                     										
+      81/     503 : (MACRO)             			CALL PutChar
+      81/     503 : D4                          SEP R4
+      81/     504 : 04 05                       dw  PUTCHAR
+      82/     506 :                     					
+      83/     506 : F8 6F               			LDI  "o"
+      84/     508 : AC                  			PLO  RC
+      85/     509 :                     										
+      86/     509 : (MACRO)             			CALL PutChar
+      86/     509 : D4                          SEP R4
+      86/     50A : 04 05                       dw  PUTCHAR
+      87/     50C :                     
+      88/     50C : F8 72               			LDI  "r"
+      89/     50E : AC                  			PLO  RC
+      90/     50F :                     										
+      91/     50F : (MACRO)             			CALL PutChar
+      91/     50F : D4                          SEP R4
+      91/     510 : 04 05                       dw  PUTCHAR
+      92/     512 :                     			
+      93/     512 : F8 6C               			LDI  "l"
+      94/     514 : AC                  			PLO  RC
+      95/     515 :                     					
+      96/     515 : (MACRO)             			CALL PutChar					
+      96/     515 : D4                          SEP R4
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm - Page 41 - 8/28/2020 13:38:20
+
+
+      96/     516 : 04 05                       dw  PUTCHAR
+      97/     518 :                     										
+      98/     518 : F8 64               			LDI  "d"
+      99/     51A : AC                  			PLO  RC
+     100/     51B :                     										
+     101/     51B : (MACRO)             			CALL PutChar				
+     101/     51B : D4                          SEP R4
+     101/     51C : 04 05                       dw  PUTCHAR
+     102/     51E :                     										
+     103/     51E : F8 21               			LDI  "!"
+     104/     520 : AC                  			PLO  RC
+     105/     521 :                     					
+     106/     521 : (MACRO)             			CALL PutChar
+     106/     521 : D4                          SEP R4
+     106/     522 : 04 05                       dw  PUTCHAR
+     107/     524 :                     					
+     108/     524 : F8 20               			LDI  " "
+     109/     526 : AC                  			PLO  RC
+     110/     527 :                     										
+     111/     527 : (MACRO)             			CALL PutChar
+     111/     527 : D4                          SEP R4
+     111/     528 : 04 05                       dw  PUTCHAR
+     112/     52A :                     
+     113/     52A : (MACRO)             			RETURN;					
+     113/     52A : D5                          SEP R5
+     114/     52B :                     ;-----------------------------------------------------------------------					
+     115/     52B :                     
+     116/     52B :                     
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm - Page 42 - 8/28/2020 13:38:20
+
+
+  Symbol Table (* = unused):
+  --------------------------
+
+*ARCHITECTURE :                                        "i386-unknown-win32" - |
+ BACKBUFFER :                 "OFF" - |  BACKSPACE :                    310 C |
+ BCH_BLANK :                    35F C |  BCH_DONE :                     37F C |
+ BCH_GETMASK :                  359 C |  BCH_LASTBYTE :                 36F C |
+ BEGINTERMINAL :                28D C | *BIGENDIAN :                      0 - |
+*BITFUNCSINC :                    1 - |  BLANKCHARACTER :               34B C |
+ BLANKLINE :                    2EF C |  BL_LOOP :                      2F6 C |
+*BRANCHEXT :                      0 - |  CANCELLINE :                   3D1 C |
+*CASESENSITIVE :                  0 - | *CBB_EXIT :                     0CB C |
+ CHARACTERPATTERN :            7F00 C |  CI_LOOP :                       66 C |
+ CLEARSCREEN :                  3D8 C |  CM_DONE :                      328 C |
+ CM_TEST :                      31F C | *CONSTPI :        3.141592653589793 - |
+*COPYBACKBUFFER :               0CB C | *COPYIMAGE :                     60 C |
+ CREATEMASK :                   31A C |  CURSORX :                     7F05 C |
+ CURSORY :                     7F06 C | *DATE :                 "8/28/2020" - |
+ DC_BLANK :                     347 C |  DC_BYTELOOP :                  142 C |
+ DC_BYTESHIFT :                 14F C |  DC_BYTEWRITE :                 159 C |
+ DC_COPYPATTERN :               13E C |  DC_MASKLOOP :                  12B C |
+ DC_PREPARESECOND :             138 C |  DC_SHIFTLOOP :                 151 C |
+ DC_SKIPHIGHBYTE :              110 C |  DC_SKIPHIGHBYTE2 :             119 C |
+ DELAY :                         3C C |  DISPLAYBUFFER :               7E00 C |
+ DISPLAYINT :                    44 C |  DOWNCURSOR :                   33C C |
+ DRAWCHARACTER :                0F1 C |  DRAWSPRITE :                    7A C |
+ DRAWSTRING :                   0CC C |  DSP_BYTELOOP :                  98 C |
+ DSP_EXIT :                     0CA C |  DSP_SHIFTEXIT :                0B7 C |
+ DSP_SHIFTLOOP :                0AB C |  DSP_SKIPINCREMENT :             8A C |
+ DS_EXIT :                      0F0 C | *FALSE :                          0 - |
+ FILLSCREEN :                    6D C |  FONT :                         16D C |
+ FS_LOOP :                       73 C | *FULLPMMU :                       1 - |
+ GC_RELEASE :                   3F1 C |  GETCHAR :                      3EB C |
+ GETCURSOR :                    4B7 C |  HANDLECONTROLCHAR :            40C C |
+*HAS64 :                          0 - | *HASDSP :                         0 - |
+*HASFPU :                         0 - | *HASPMMU :                        0 - |
+ HCC_BACKSPACE :                44A C |  HCC_CANCEL :                   440 C |
+ HCC_DEL :                      445 C |  HCC_EXIT :                     463 C |
+ HCC_FORMFEED :                 459 C |  HCC_NEWLINE :                  45E C |
+ HCC_TAB :                      44F C |  HCC_UNIT :                     439 C |
+ HCC_VTAB :                     454 C |  HELLOWORLD :                   4D6 C |
+*INEXTMODE :                      0 - | *INIT :                           0 C |
+*INLWORDMODE :                    0 - | *INMAXMODE :                      0 - |
+*INSRCMODE :                      0 - | *INSUPMODE :                      0 - |
+ INT_EXIT :                      42 C |  INT_LOOP :                      51 C |
+ LC_EXIT :                      3A4 C |  LC_HOME :                      39E C |
+ LC_PREVIOUSLINE :              38F C |  LEFTCURSOR :                   380 C |
+*LISTON :                         1 - | *MACEXP :                         7 - |
+ MAINLOOP :                     4CE C | *MOMCPU :                      1802 - |
+*MOMCPUNAME :                "1802" - | *NESTMAX :                      100 - |
+ NEXTLINE :                     32D C |  NL_EXIT :                      33B C |
+*PACKING :                        0 - | *PADDING :                        1 - |
+ PS_EXIT :                      4A5 C |  PS_WRITESTRING :               492 C |
+ PUTCHAR :                      405 C | *PUTSTRING :                    48F C |
+ R0 :                             0 - |  R1 :                             1 - |
+ R2 :                             2 - |  R3 :                             3 - |
+ R4 :                             4 - |  R5 :                             5 - |
+ R6 :                             6 - | *R7 :                             7 - |
+*R8 :                             8 - | *R9 :                             9 - |
+*RA :                            0A - |  RB :                            0B - |
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm - Page 43 - 8/28/2020 13:38:20
+
+
+ RC :                            0C - |  RC_EXIT :                      3BF C |
+ RD :                            0D - |  RE :                            0E - |
+ READHEXINPUT :                 3F9 C | *RELAXED :                        0 - |
+ RESOLUTION :               "64x32" - |  RF :                            0F - |
+ RHI_RELEASE :                  3FD C |  RIGHTCURSOR :                  3A5 C |
+ RUBOUT :                       3C0 C |  SETCURSOR :                    4A6 C |
+ SETVIDEOFLAG :                 2E6 C |  STACKTOP :                    7F7F C |
+ START :                        4C8 C |  STC_EXIT :                      1F C |
+ STDCALL :                       20 C |  STDRETURN :                     30 C |
+ STR_EXIT :                      2F C |  TABCURSOR :                    302 C |
+ TAB_EXIT :                     30F C | *TIME :                  "13:38:20" - |
+*TRUE :                           1 - |  UNITSEPARATOR :                3CA C |
+ USEGRAPHICS :               "TRUE" - |  USETEXT :                   "TRUE" - |
+ USETTY :                    "TRUE" - | *VERSION :                     142F - |
+ VIDEOFLAG :                   7F07 C | *VIDEOOFF :                     2A0 C |
+ VIDEOOFFSETX :                 2D1 C |  VIDEOOFFSETY :                 2C0 C |
+ VIDEOON :                      298 C |  VY_DONE :                      2D0 C |
+ WAITFORINPUT :                 400 C |  WAITFORSAFEUPDATE :            2A9 C |
+ WC_CONTROL :                   477 C |  WC_DRAW :                      47C C |
+*WC_EXIT :                      48E C |  WC_SETCHAR :                   46D C |
+ WC_UPDATECURSOR :              48B C |  WFI_RELEASE :                  402 C |
+ WFSU_CHECK_DMA :               2B2 C |  WFSU_COUNT :                   2B8 C |
+ WFSU_EXIT :                    2BF C |  WFSU_NEW_EF1 :                 2B6 C |
+ WFSU_SYNC :                    2B4 C |  WRITECHAR :                    464 C |
+*WRITEHEXOUTPUT :               3F4 C | *Z80SYNTAX :                      0 - |
+
+    163 symbols
+     42 unused symbols
+
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm - Page 44 - 8/28/2020 13:38:20
+
+
+  Defined Macros:
+  ---------------
+
+CALL                                  | LOAD                                 
+RETURN                                |
+
+      3 macros
+
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm - Page 45 - 8/28/2020 13:38:20
+
+
+  Defined Functions:
+  ------------------
+
+ROTRN                                 | ROTLN                                
+SHRN                                  | SHLN                                 
+GETBIT                                | EVEN                                 
+ODD                                   | LOWORD                               
+HIWORD                                | LO                                   
+HI                                    | CUTOUT                               
+INVMASK                               | MASK                                 
+
+ AS V1.42 Beta [Bld 172] - Source File HelloWorld.asm - Page 46 - 8/28/2020 13:38:20
+
+
+  Code Pages:
+  ----------
+
+STANDARD (0 changed characters)
+
+1 code page
+
+0.16 seconds assembly time
+
+   2294 lines source file
+   2500 lines incl. macro expansions
+      2 passes
+      0 errors
+      0 warnings
