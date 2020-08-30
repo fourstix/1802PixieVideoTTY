@@ -6,6 +6,8 @@ driven by an 1802 Cosmac microprocessor.  It has been tested with the 1802 Membe
 with the MCard1802TeensyPixieVideo  CDP1861 simulator.  The code is based on Richard Dienstknecht's original 
 graphics code that was posted in the [Cosmac Elf Group on Groups.io.](https://groups.io/g/cosmacelf)
 
+The code is assembled with the [Macro Assembler AS[(http://john.ccac.rwth-aachen.de:8000/as/) by Alfred Arnold,
+
 
 Repository Contents
 -------------------
@@ -172,6 +174,9 @@ This code is based on a graphics code library written by Richard Dienstknecht
 
 1861 Graphics Code Library
 Copyright (c) 2020 by Richard Dienstknecht
+
+Macro Assembler AS
+Copyright (c) 1996-2020 by Alfred Arnold
   
 The 1802 Membership Card Microcomputer 
 Copyright (c) 2006-2020  by Lee A. Hart.
