@@ -3,10 +3,10 @@ Basic TTY terminal function for CDP1861 Pixie Video Display written in 1802 Asse
 
 This code provides support for a basic teletype (TTY) terminal functions on an 1861 Pixie Video disaply
 driven by an 1802 Cosmac microprocessor.  It has been tested with the 1802 Membership Card by Lee Hart 
-with the MCard1802TeensyPixieVideo  CDP1861 simulator.  The code is based on Richard Dienstknecht's original 
-graphics code that was posted in the [Cosmac Elf Group on Groups.io.](https://groups.io/g/cosmacelf)
+with the [MCard1802TeensyPixieVideo](https://github.com/fourstix/MCard1802TeensyPixieVideo) CDP1861 simulator.
+The code is based on Richard Dienstknecht's original graphics code that was posted in the [Cosmac Elf Group on Groups.io.](https://groups.io/g/cosmacelf)
 
-The code is assembled with the [Macro Assembler AS[(http://john.ccac.rwth-aachen.de:8000/as/) by Alfred Arnold,
+The code is assembled with the [Macro Assembler AS](http://john.ccac.rwth-aachen.de:8000/as/) by Alfred Arnold,
 
 
 Repository Contents
