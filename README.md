@@ -155,7 +155,24 @@ The following control characters are supported.
 
 Examples
 --------
-TBD: Table with pictures of examples goes here.
+<table class="table table-hover table-striped table-bordered">
+  <tr align="center">
+   <td><img width=300 src="https://github.com/fourstix/1802PixieVideoTTY/blob/master/pics/FullDemo1.jpg"></td>
+   <td><img width=300 src="https://github.com/fourstix/1802PixieVideoTTY/blob/master/pics/FullDemo2.jpg"></td> 
+  </tr>
+  <tr align="center">
+    <td>FullDemo showing Text in 64x64 resolution.</td>
+    <td>Full Demo showing Sprites in 64x64 resolution.</td>
+  </tr>
+  <tr align="center">
+   <td><img width=300 src="https://github.com/fourstix/1802PixieVideoTTY/blob/master/pics/HelloWorld.jpg""></td>
+   <td><img width=300 src="https://github.com/fourstix/1802PixieVideoTTY/blob/master/pics/BasicTerminal.jpg""></td> 
+  </tr>
+  <tr align="center">
+    <td>HelloWorld Demo running in 64x32 resolution</td>
+    <td>BasicTerminal Demo in 64x64 resolution showing ASCII text typed into Hex Keypad.</td>
+  </tr>   
+</table>
 
 License Information
 -------------------
