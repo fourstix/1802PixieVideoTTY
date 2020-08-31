@@ -170,6 +170,14 @@ Examples
   <tr align="center">
     <td>HelloWorld Demo running in 64x32 resolution</td>
     <td>BasicTerminal Demo in 64x64 resolution showing ASCII text typed into Hex Keypad.</td>
+  </tr>
+  <tr align="center">
+   <td><img width=300 src="https://github.com/fourstix/1802PixieVideoTTY/blob/master/pics/PutString.jpg""></td>
+   <td><img width=300 src="https://github.com/fourstix/1802PixieVideoTTY/blob/master/pics/StringBuffer.jpg""></td> 
+  </tr>
+  <tr align="center">
+    <td>PutString Demo running in 64x64 resolution</td>
+    <td>StringBuffer Demo in 64x32 resolution showing ASCII strings typed into the Hex Keypad.</td>
   </tr>   
 </table>
 
