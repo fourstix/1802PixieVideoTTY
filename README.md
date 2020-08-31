@@ -150,7 +150,6 @@ The following control characters are supported.
      <td>0x7F</td>
      <td  colspan="3">Move cursor back one pixel width and delete the pixel column. Can be used after backspacing over a wide character to rubout remaining pixels.</td>
   </tr>
-
 </table>
 
 Examples
