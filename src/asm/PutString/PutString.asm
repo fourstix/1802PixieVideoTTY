@@ -6,7 +6,7 @@
 ; *******************************************************************************************
 
 UseGraphics		EQU "TRUE"
-Resolution		EQU "64x64"			; "64x32" or "64x64"
+Resolution		EQU "64x64"			; "64x32", "64x64" or "64x128"
 BackBuffer		EQU "OFF"			; 'OFF', 'COPY' or 'SWAP'
 
 UseText			EQU "TRUE"
