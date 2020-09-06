@@ -14,6 +14,9 @@
 ;
 ;	3. The WaitForSafeUpdate function can be used to check for the end of Video DMA 
 ;	when it is safe to update video data.
+;
+; Changes:
+; Gaston Williams, Sept, 2020 - Added 64 x 128 Resolution logic
 ; *******************************************************************************************
 
 			IF UseTty == "TRUE"
@@ -165,16 +168,30 @@ VideoOffsetY:		IF BackBuffer == "OFF"
 			IF Resolution == "64x64"
 				ANI  3FH		; or 0 - 63
 			ENDIF
+			
+			IF Resolution == "64x128"
+				ANI  7FH		; or 0 - 127
+			ENDIF
 				SHL			; Convert Y value to position offset = (y * 8)
-				SHL			
+				SHL			; check high bit of 64x128 count in df
+
+			IF Resolution == "64x128"
+				PLO  RF			; save RF low byte
+				BNF  VY_SkipHighInc	; check high order bit of 64x128 count
+				GHI  RF			; get RF high byte
+				ADI  02H		; df represents two's bit after shifting
+				PHI  RF			; update RF high byte
+VY_SkipHighInc:			GLO  RF			; restore RF low byte and continue shifting
+
+			ENDIF				
 				SHL
 				PLO  RF
-				BNF  VY_Done
+				BNF  VY_SkipLowInc
 				GHI  RF
 				ADI  01H
 				PHI  RF
 
-VY_Done:			RETURN
+VY_SkipLowInc:			RETURN
 ;------------------------------------------------------------------------------------------
 
 
@@ -392,10 +409,19 @@ NextLine:		LDI  00H		; load zero and save as cursorX
 			GHI  RE			; advance y cursor to point to next line									
 			ADI  06H                ; each line is 6 pixels high
 			PHI  RE			; update cursorY 
+
+		IF Resolution == "64x128"	
+			SDI  78H		; check to see if we are past the end		
+			BGE NL_Exit             ; DF = 1 means haven't gone past 120 y pixels							
+			
+			LDI  04H		; go back to top line
+			PHI  RE			; update cursorY		
+		ENDIF
 			
 		IF Resolution == "64x64"	
 			SDI  3CH		; check to see if we are past the end
 			BGE NL_Exit             ; DF = 1 means haven't gone past 60 y pixels				
+			
 			LDI  02H		; go back to top line
 			PHI  RE			; update cursorY		
 		ENDIF
@@ -403,6 +429,7 @@ NextLine:		LDI  00H		; load zero and save as cursorX
 		IF Resolution == "64x32" 	
 			SDI  1EH		; check to see if we are past the end
 			BGE NL_Exit             ; DF = 1 means haven't gone past 30 y pixels				
+			
 			LDI  01H		; go back to top line
 			PHI  RE			; update cursorY
 		ENDIF
@@ -430,6 +457,14 @@ DownCursor:		GHI  RE			; move y by 6 pixels
 			ADI  06H
 			PHI  RE			; save y
 			
+		IF Resolution == "64x128"											
+			SDI  78H		; check y value to see if we went past 120
+			BGE  DC_Blank		; if not, erase the next line			
+
+			LDI  04H		; if so, move back to first line at top of console
+			PHI  RE			; save y
+		ENDIF
+		
 		IF Resolution == "64x64"											
 			SDI  3CH		; check y value to see if we went past 60
 			BGE  DC_Blank		; if not, erase the next line
@@ -566,7 +601,12 @@ LC_PreviousLine:	GHI  RE
 			PLO  RE		
 			BR   LC_Exit
 			
-LC_Home:	IF Resolution == "64x64"
+LC_Home:	IF Resolution == "64x128"
+			LDI  04H		; set y to first line
+			PHI  RE
+		ENDIF
+		
+		IF Resolution == "64x64"
 			LDI  02H		; set y to first line
 			PHI  RE
 		ENDIF
@@ -616,7 +656,15 @@ RightCursor:		GLO  RF			; advance the x coordinate by the
 			GHI  RE			; move y by 6 pixels
 			ADI  06H
 			PHI  RE
-					
+
+		IF Resolution == "64x128"		
+			SDI  78H		; check y value to see if we went past 120
+			BGE  RC_Exit
+						
+			LDI  04H		; if so move back to first line at top of console
+			PHI  RE	
+		ENDIF					
+		
 		IF Resolution == "64x64"		
 			SDI  3CH		; check y value to see if we went past 60
 			BGE  RC_Exit
@@ -729,6 +777,11 @@ ClearScreen: 		CALL WaitForSafeUpdate	;Wait for DMA to complete before clearing
 			LDI  00H		; set x location to left margin			
 			PLO  RE
 			
+		IF Resolution == "64x128"
+			LDI  04H		; set y location to top line			
+			PHI  RE
+		ENDIF
+		
 		IF Resolution == "64x64"
 			LDI  02H		; set y location to top line			
 			PHI  RE

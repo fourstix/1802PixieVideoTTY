@@ -3,9 +3,10 @@
 ; by Richard Dienstknecht
 ;
 ; Changes:
-; Gaston Williams, July, 2020 - Removed 64 x 128 Resolution logic
+; Gaston Williams, July, 2020 - Removed 64x128 Resolution logic
 ; Gaston Williams, July, 2020 - Put Buffer definitions into a separate file
-; Gaston Williams, August, 2020 - Added Cursor and Video flag definitions
+; Gaston Williams, Aug,  2020 - Added Cursor and Video flag definitions
+; Gaston Williams, Sept, 2020 - Restored 64x128 Resolution logic
 ; *****************************************************************************************
 
 ; =========================================================================================
@@ -26,8 +27,16 @@ DisplayBuffer:			db 256 dup (?)
 				ORG 7D00H
 DisplayBuffer:			db 512 dup (?)
 			ENDIF
-					
-		ELSEIF					; COPY and SWAP use two video buffers
+
+			IF Resolution == "64x128"
+				ORG 7B00H
+DisplayBuffer:			db 1024 dup (?)
+			ENDIF
+			
+		
+		ENDIF
+		
+		IF BackBuffer <> "OFF"			; COPY and SWAP use two video buffers
 			IF Resolution == "64x32"
 				ORG 7D00H	
 DisplayBuffer:			db 256 dup (?)
@@ -39,7 +48,12 @@ DoubleBuffer:			db 256 dup (?)
 DisplayBuffer:			db 512 dup (?)
 DoubleBuffer:			db 512 dup (?)
 			ENDIF
-					
+			
+			IF Resolution == "64x128"
+				ORG 7700H
+DisplayBuffer:			db 1024 dup (?)
+DoubleBuffer:			db 1024 dup (?)
+			ENDIF					
 		ENDIF
 
 				ORG 7F00H

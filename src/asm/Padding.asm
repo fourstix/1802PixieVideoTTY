@@ -11,6 +11,24 @@
 ; Padding for more than 16 bytes is commented out.
 ; =========================================================================================
 		
+		IF Resolution == "64x128"
+			;IF BackBuffer == "COPY"
+			;	db 7 dup 00H
+			;ENDIF	
+					
+			;IF BackBuffer == "SWAP"
+			;	db 13 dup 00H
+			;ENDIF				
+					
+			; Uncomment the lines below if there's a boundary issue with 64x64
+			; resolution user code when assembled with the BackBuffer option "OFF"
+			
+			;IF BackBuffer == "OFF"
+			;	db 41 dup 00H
+			;ENDIF
+					
+		ENDIF
+		
 		IF Resolution == "64x64"
 			IF BackBuffer == "COPY"
 				db 7 dup 00H
