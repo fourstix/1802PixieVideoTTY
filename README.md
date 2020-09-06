@@ -1,7 +1,7 @@
 # 1802PixieVideoTTY
 Basic TTY terminal function for CDP1861 Pixie Video Display written in 1802 Assembly code.
 
-This code provides support for a basic teletype (TTY) terminal functions on an 1861 Pixie Video disaply
+This code provides support for a basic teletype (TTY) terminal functions on an 1861 Pixie Video display
 driven by an 1802 Cosmac microprocessor.  It has been tested with the 1802 Membership Card by Lee Hart 
 with the [MCard1802TeensyPixieVideo](https://github.com/fourstix/MCard1802TeensyPixieVideo) CDP1861 simulator.
 The code is based on Richard Dienstknecht's original graphics code that was posted in the [Cosmac Elf Group on Groups.io.](https://groups.io/g/cosmacelf)
@@ -50,8 +50,8 @@ Repository Contents
 Usage Notes
 -----------
 * **Video Resolution** 
-* Resolutions of 64 x 64 and 64 x 32 are supported.
-* The 64 x 128 resolution is not supported.
+* Resolutions of 64x64 and 64x32 are supported and tested.
+* The 64x128 resolution is supported but has not been fully tested.
 * **BeginTerminal** 
 * This function initializes system variables used by other TTY Terminal functions.
 * The BeginTerminal function must be called before any any other Terminal functions.
