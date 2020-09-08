@@ -50,8 +50,7 @@ Repository Contents
 Usage Notes
 -----------
 * **Video Resolution** 
-* Resolutions of 64x64 and 64x32 are supported and tested.
-* The 64x128 resolution is supported but has not been fully tested because of a lack of hardware.
+* Resolutions of 64x128, 64x64 and 64x32 are supported.
 * **BeginTerminal** 
 * This function initializes system variables used by other TTY Terminal functions.
 * The BeginTerminal function must be called before any any other Terminal functions.
