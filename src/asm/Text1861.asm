@@ -3,10 +3,9 @@
 ; by Richard Dienstknecht
 ;
 ; Changes:
-; Gaston Williams, July, 2020   - Removed 64 x 128 Resolution logic
-; Gaston Williams, July, 2020   - Moved Font definitions into separate file
-; Gaston Williams, July, 2020   - Replaced Std Call and Std Return with Macros
-; Gaston Williams  August, 2020 - Added Macro for loading Register
+; Gaston Williams, July, 2020 - Moved Font definitions into separate file
+; Gaston Williams, July, 2020 - Replaced Std Call and Std Return with Macros
+; Gaston Williams  Aug,  2020 - Added Macro for loading Register
 ; *****************************************************************************************
 
 		IF UseText == "TRUE"

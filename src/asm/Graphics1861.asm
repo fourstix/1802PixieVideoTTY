@@ -3,9 +3,11 @@
 ; by Richard Dienstknecht
 ;
 ; Changes:
-; Gaston Williams, July, 2020   - Removed 64 x 128 Resolution logic
-; Gaston Williams, July, 2020   - Replaced Std Call and Std Return with Macros
-; Gaston Williams  August, 2020 - Added Macro for loading Register
+; Gaston Williams, July, 2020 - Removed 64x128 Resolution logic
+; Gaston Williams, July, 2020 - Replaced Std Call and Std Return with Macros
+; Gaston Williams  Aug,  2020 - Added Macro for loading Register
+; Gaston Williams, Sept, 2020 - Restored 64x128 Resolution logic
+; Gaston Williams  Sept, 2020 - Updated DrawSprite logic for 64x128 resolution
 ; *****************************************************************************************
 
 				IF UseGraphics == "TRUE"
@@ -104,6 +106,42 @@ INT_Rest:			GLO  R0
 
 ;------------------------------------------------------------------------------------------
 
+
+; =========================================================================================
+; Interrupt and DMA service routine for the CDP1861 to display an effective resolution
+; of 64 x 128 pixels, using a display buffer of 1024 bytes.
+; =========================================================================================
+
+					IF Resolution == "64x128"
+
+INT_Exit:			LDXA
+					RET
+DisplayInt:			NOP
+					DEC  R2
+					SAV
+					DEC  R2
+					STR  R2
+					SEX  R2					
+					SEX  R2
+					
+					IF BackBuffer <> "SWAP"
+					LDI  hi(DisplayBuffer)
+					ENDIF
+
+					IF BackBuffer == "SWAP"
+					GHI  R7
+					ENDIF
+
+					PHI  R0
+					LDI  00H
+					PLO  R0
+					BR   INT_Exit
+
+					ENDIF
+
+;------------------------------------------------------------------------------------------
+
+
 ; =========================================================================================
 ; Parameters:
 ; RF		Pointer to the image
@@ -156,7 +194,27 @@ CI_Loop:			LDA  RF
 					SD
 					BDF  CI_Loop				
 					ENDIF
-									
+					
+					IF Resolution == "64x128"
+					IF BackBuffer == "OFF"
+					LDI   hi(DisplayBuffer) + 3
+					ENDIF
+
+					IF BackBuffer == "COPY"
+					LDI   hi(DoubleBuffer) + 3
+					ENDIF
+
+					IF BackBuffer == "SWAP"
+					GLO  R7
+					ADI  03H
+					ENDIF
+
+					STR  R2
+					GHI  RE
+					SD
+					BDF  CI_Loop				
+					ENDIF
+														
 					RETURN					
 
 ;------------------------------------------------------------------------------------------
@@ -214,6 +272,26 @@ FS_Loop:			GHI  RF
 					BDF  FS_Loop				
 					ENDIF
 					
+					IF Resolution == "64x128"
+					IF BackBuffer == "OFF"
+					LDI   hi(DisplayBuffer) + 3
+					ENDIF
+
+					IF BackBuffer == "COPY"
+					LDI   hi(DoubleBuffer) + 3
+					ENDIF
+
+					IF BackBuffer == "SWAP"
+					GLO  R7
+					ADI  03H
+					ENDIF
+
+					STR  R2
+					GHI  RE
+					SD
+					BDF  FS_Loop				
+					ENDIF
+					
 					RETURN					
 
 ;------------------------------------------------------------------------------------------
@@ -231,38 +309,51 @@ FS_Loop:			GHI  RF
 ; =========================================================================================
 
 DrawSprite:			IF BackBuffer == "OFF"
-					LDI  hi(DisplayBuffer)			; prepare the pointer to the video buffer
+					LDI  hi(DisplayBuffer)		; prepare the pointer to the video buffer
 					ENDIF
 
 					IF BackBuffer == "COPY"
-					LDI  hi(DoubleBuffer)			; prepare the pointer to the back buffer
+					LDI  hi(DoubleBuffer)		; prepare the pointer to the back buffer
 					ENDIF
 
 					IF BackBuffer == "SWAP"
-					GLO  R7							; prepare the pointer to the current back buffer
+					GLO  R7				; prepare the pointer to the current back buffer
 					ENDIF
 					
-					PHI  RC							; DisplayBuffer + Y * 8 + X / 8
-					GHI  RE							; result goes to RC
+					PHI  RC				; DisplayBuffer + Y * 8 + X / 8
+					GHI  RE				; result goes to RC
 
 					IF Resolution == "64x32"
-					ANI  1FH						; between 0 - 31
+					ANI  1FH			; between 0 - 31
 					ENDIF
 				
 					IF Resolution == "64x64"
-					ANI  3FH						; or 0 - 63
+					ANI  3FH			; or 0 - 63
 					ENDIF
 
-					SHL
-					SHL
-					SHL
+					IF Resolution == "64x128"
+					ANI  7FH			; or 0 - 127
+					ENDIF
+
+					SHL			; after two shifts check 64x128 high bit in df
+					SHL			; df will always be zero for 64x64 and 64x32
+					
+				IF Resolution == "64x128"
+					PLO  RC			; save low byte
+					BNF  DSP_SkipHighInc	; df is high order bit of 64x128 count
+					GHI  RC			; get high byte
+					ADI  02H		; df represents two's bit after shifting
+					PHI  RC			; update high byte
+DSP_SkipHighInc:			GLO  RC			; restore low byte and continue shifting
+				ENDIF
+					SHL			
 					PLO  RC
-					BNF  DSP_SkipIncrement
+					BNF  DSP_SkipLowInc
 					GHI  RC
 					ADI  01H
 					PHI  RC
 					
-DSP_SkipIncrement:	GLO  RC
+DSP_SkipLowInc:			GLO  RC
 					STR  R2
 					GLO  RE
 					ANI  3FH
@@ -271,9 +362,9 @@ DSP_SkipIncrement:	GLO  RC
 					SHR
 					ADD
 					PLO  RC
-					GLO  RE							; calculate the number of required shifts 
-					ANI  07H						; result to RE.1, replacing the Y coordinate
-					PHI  RE							; RE.0 will be used later to count the shifts
+					GLO  RE					; calculate the number of required shifts 
+					ANI  07H				; result to RE.1, replacing the Y coordinate
+					PHI  RE					; RE.0 will be used later to count the shifts
 
 DSP_ByteLoop:		GLO  RD							; exit if all bytes of the sprite have been drawn
 					BZ   DSP_Exit
@@ -304,6 +395,21 @@ DSP_ByteLoop:		GLO  RD							; exit if all bytes of the sprite have been drawn
 					IF BackBuffer == "SWAP"
 					GLO  R7
 					ADI  01H
+					ENDIF
+					ENDIF
+
+					IF Resolution == "64x128"
+					IF BackBuffer == "OFF"
+					LDI   hi(DisplayBuffer) + 3
+					ENDIF
+
+					IF BackBuffer == "COPY"
+					LDI   hi(DoubleBuffer) + 3
+					ENDIF
+
+					IF BackBuffer == "SWAP"
+					GLO  R7
+					ADI	 03H
 					ENDIF
 					ENDIF
 
@@ -374,6 +480,10 @@ CBB_Loop:				LDA  RF
 					
 					IF Resolution == "64x64"
 					LDI   hi(DisplayBuffer) + 1
+					ENDIF
+					
+					IF Resolution == "64x128"
+					LDI   hi(DisplayBuffer) + 3
 					ENDIF
 
 					STR  R2

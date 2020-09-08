@@ -3,12 +3,13 @@
 ; by Richard Dienstknecht
 ;
 ; Changes:
-; Gaston Williams, July,   2020 - Rewrote Initialisation.asm file as Initialize.asm
-; Gaston Williams, July,   2020 - Removed unused include files
-; Gaston Williams, July,   2020 - Replaced Std Call and Return with Macros
-; Gaston Williams  August, 2020 - Added IF blocks to change compile order
-; Gaston Williams  August, 2020 - Included padding file
-; Gaston Williams  August, 2020 - Added Macro for loading Register
+; Gaston Williams, July, 2020 - Rewrote Initialisation.asm file as Initialize.asm
+; Gaston Williams, July, 2020 - Removed unused include files
+; Gaston Williams, July, 2020 - Replaced Std Call and Return with Macros
+; Gaston Williams  Aug,  2020 - Added IF blocks to change compile order
+; Gaston Williams  Aug,  2020 - Included padding file
+; Gaston Williams  Aug,  2020 - Added Macro for loading Register
+; Gaston Williams  Aug,  2020 - Restored 64x128 resolution
 ; *****************************************************************************************
 				INCLUDE "bitfuncs.inc"
 				INCLUDE "buffers.asm"
@@ -105,7 +106,18 @@ Delay:				NOP
 ; =========================================================================================
 
 				INCLUDE "Graphics1861.asm"
-				
+		
+		IF Resolution == "64x128"				
+			IF BackBuffer == "OFF"
+				INCLUDE "Text1861.asm"							
+				INCLUDE "Fonts.asm"
+			ELSEIF
+				INCLUDE "Fonts.asm"
+				INCLUDE "Text1861.asm"				
+			ENDIF				
+				INCLUDE "Tty1861.asm"
+		ENDIF
+		
 		IF Resolution == "64x64"				
 			IF BackBuffer == "OFF"
 				INCLUDE "Text1861.asm"							
