@@ -4,32 +4,32 @@
 ; Copyright (c) 2020 by Gaston Williams
 ;
 ; *******************************************************************************************
-UseGraphics			EQU "TRUE"
-Resolution			EQU "64x32"			; "64x32" or "64x64"
-BackBuffer			EQU "OFF"			; 'OFF', 'COPY' or 'SWAP'
+UseGraphics                     EQU "TRUE"
+Resolution                      EQU "64x32"            ; "64x32", "64x64" or "64x128"
+BackBuffer                      EQU "OFF"               ; 'OFF', 'COPY' or 'SWAP'
 
-UseText				EQU "TRUE"
-UseTty				EQU "TRUE"
+UseText                         EQU "TRUE"
+UseTty                          EQU "TRUE"
 
-			INCLUDE "StdDefs.asm"
-			INCLUDE "Initialize.asm"
+                        INCLUDE "StdDefs.asm"
+                        INCLUDE "Initialize.asm"
 
 
 ; =========================================================================================
 ; Main
 ; =========================================================================================
 
-Start:			CALL BeginTerminal
+Start:                  CALL BeginTerminal
 
-				
-			CALL VideoOn		; turn video on					
-			
-MainLoop:  		CALL HelloWorld
-					
-					
-			CALL WaitForInput      	; wait for input from the hex keyboard								
-			
-			BR   MainLoop		; say Hello! again						
+
+                        CALL VideoOn            ; turn video on
+
+MainLoop:               CALL HelloWorld
+
+
+                        CALL WaitForInput       ; wait for input from the hex keyboard
+
+                        BR   MainLoop           ; say Hello! again
 ;----------------------------------------------------------------------------------------
 
 
@@ -40,76 +40,75 @@ MainLoop:  		CALL HelloWorld
 ; RC.0 - Character to write to screen
 ; =========================================================================================
 
-HelloWorld:		LDI  "H"
-			PLO  RC											
-					
-			CALL PutChar
-					
-			LDI  "e"
-			PLO  RC
-					
-			CALL PutChar
-					
-			LDI  "l"
-			PLO  RC
-					
-			CALL PutChar
+HelloWorld:             LDI  "H"
+                        PLO  RC
 
-			LDI  "l"
-			PLO  RC
-					
-			CALL PutChar
-					
-			LDI  "o"
-			PLO  RC
-										
-			CALL PutChar
-					
-			LDI  ","
-			PLO  RC
-												
-			CALL PutChar
+                        CALL PutChar
 
-			LDI  " "
-			PLO  RC
-										
-			CALL PutChar
-					
-			LDI  "W"
-			PLO  RC
-										
-			CALL PutChar
-					
-			LDI  "o"
-			PLO  RC
-										
-			CALL PutChar
+                        LDI  "e"
+                        PLO  RC
 
-			LDI  "r"
-			PLO  RC
-										
-			CALL PutChar
-			
-			LDI  "l"
-			PLO  RC
-					
-			CALL PutChar					
-										
-			LDI  "d"
-			PLO  RC
-										
-			CALL PutChar				
-										
-			LDI  "!"
-			PLO  RC
-					
-			CALL PutChar
-					
-			LDI  " "
-			PLO  RC
-										
-			CALL PutChar
+                        CALL PutChar
 
-			RETURN;					
-;-----------------------------------------------------------------------					
+                        LDI  "l"
+                        PLO  RC
 
+                        CALL PutChar
+
+                        LDI  "l"
+                        PLO  RC
+
+                        CALL PutChar
+
+                        LDI  "o"
+                        PLO  RC
+
+                        CALL PutChar
+
+                        LDI  ","
+                        PLO  RC
+
+                        CALL PutChar
+
+                        LDI  " "
+                        PLO  RC
+
+                        CALL PutChar
+
+                        LDI  "W"
+                        PLO  RC
+
+                        CALL PutChar
+
+                        LDI  "o"
+                        PLO  RC
+
+                        CALL PutChar
+
+                        LDI  "r"
+                        PLO  RC
+
+                        CALL PutChar
+
+                        LDI  "l"
+                        PLO  RC
+
+                        CALL PutChar
+
+                        LDI  "d"
+                        PLO  RC
+
+                        CALL PutChar
+
+                        LDI  "!"
+                        PLO  RC
+
+                        CALL PutChar
+
+                        LDI  " "
+                        PLO  RC
+
+                        CALL PutChar
+
+                        RETURN;
+;-----------------------------------------------------------------------
