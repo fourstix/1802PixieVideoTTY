@@ -12,72 +12,72 @@
 ; =========================================================================================
 ; Define Video Buffers and Main Stack
 ; =========================================================================================
-					CPU 1802
-					
+                                        CPU 1802
+                                        
 ; =========================================================================================
 ; Display buffers
 ; =========================================================================================
-		IF BackBuffer == "OFF"			; OFF uses only one video buffer
-			IF Resolution == "64x32"
-				ORG 7E00H	
-DisplayBuffer:			db 256 dup (?)
-			ENDIF
+                IF BackBuffer == "OFF"                  ; OFF uses only one video buffer
+                        IF Resolution == "64x32"
+                                ORG 7E00H       
+DisplayBuffer:                  db 256 dup (?)
+                        ENDIF
 
-			IF Resolution == "64x64"
-				ORG 7D00H
-DisplayBuffer:			db 512 dup (?)
-			ENDIF
+                        IF Resolution == "64x64"
+                                ORG 7D00H
+DisplayBuffer:                  db 512 dup (?)
+                        ENDIF
 
-			IF Resolution == "64x128"
-				ORG 7B00H
-DisplayBuffer:			db 1024 dup (?)
-			ENDIF
-			
-		
-		ENDIF
-		
-		IF BackBuffer <> "OFF"			; COPY and SWAP use two video buffers
-			IF Resolution == "64x32"
-				ORG 7D00H	
-DisplayBuffer:			db 256 dup (?)
-DoubleBuffer:			db 256 dup (?)
-			ENDIF
+                        IF Resolution == "64x128"
+                                ORG 7B00H
+DisplayBuffer:                  db 1024 dup (?)
+                        ENDIF
+                        
+                
+                ENDIF
+                
+                IF BackBuffer <> "OFF"                  ; COPY and SWAP use two video buffers
+                        IF Resolution == "64x32"
+                                ORG 7D00H       
+DisplayBuffer:                  db 256 dup (?)
+DoubleBuffer:                   db 256 dup (?)
+                        ENDIF
 
-			IF Resolution == "64x64"
-				ORG 7B00H
-DisplayBuffer:			db 512 dup (?)
-DoubleBuffer:			db 512 dup (?)
-			ENDIF
-			
-			IF Resolution == "64x128"
-				ORG 7700H
-DisplayBuffer:			db 1024 dup (?)
-DoubleBuffer:			db 1024 dup (?)
-			ENDIF					
-		ENDIF
+                        IF Resolution == "64x64"
+                                ORG 7B00H
+DisplayBuffer:                  db 512 dup (?)
+DoubleBuffer:                   db 512 dup (?)
+                        ENDIF
+                        
+                        IF Resolution == "64x128"
+                                ORG 7700H
+DisplayBuffer:                  db 1024 dup (?)
+DoubleBuffer:                   db 1024 dup (?)
+                        ENDIF                                   
+                ENDIF
 
-				ORG 7F00H
-				
+                                ORG 7F00H
+                                
 ; =========================================================================================
 ; Buffer for unpacked characters
 ; =========================================================================================
 
-CharacterPattern:	db 5 dup ?
+CharacterPattern:       db 5 dup ?
 
 ; =========================================================================================
 ; Cursor location for video console
 ; =========================================================================================
 
-CursorX			db ?
+CursorX                 db ?
 
-CursorY			db ?
+CursorY                 db ?
 ;------------------------------------------------------------------------------------------
 
 ; =========================================================================================
 ; Flag to indicate if 1861 Video is currently on or off
 ; =========================================================================================
 
-VideoFlag		db ?
+VideoFlag               db ?
 ;------------------------------------------------------------------------------------------
 
 ; 
@@ -88,10 +88,10 @@ VideoFlag		db ?
 ; Space for the main stack
 ; =========================================================================================
 
-					
-			ORG 7F7FH
+                                        
+                        ORG 7F7FH
 StackTop:
-;------------------------------------------------------------------------------------------	
+;------------------------------------------------------------------------------------------     
 
 ; =========================================================================================
 ; Reserve 7F80H to 7FFFH for Super Monitor program
